@@ -263,3 +263,29 @@
 
 **Next**
 - ربط PreparationCoordinator بالـCourtRoom والـpublic preparation state، ثم deterministic DNA→Blueprint composer.
+
+---
+
+## 2026-08-24 — Authoritative Preparation room lifecycle
+
+**Changed**
+- أضيف `PreparationState` عام إلى Colyseus: stage، participant ids، ready ids، وعدد hard blockers/warnings فقط؛ لا Memory/Secrets/Consultation text في الحالة المتزامنة.
+- بعد نجاح التوزيع الذري يبدأ `PreparationCoordinator` تلقائيًا للأدوار الأساسية، ويُنشئ مجموعات الدفاع الخاصة من خطة التمثيل نفسها.
+- أضيفت رسائل آمنة للجاهزية والملاحظات واسترجاع الملاحظات وقراءة Consultations وإضافة الملاحظات الخاصة.
+- تعديل retained notes مسموح فقط أثناء Preparation، بينما قراءتها تبقى ممكنة بعد القفل حتى يعتمد HUD المحكمة عليها لاحقًا.
+- فتح المحكمة أصبح Judge-only ويستخدم `attemptOpenCourt`: Hard Blocker لا يتجاوز، Soft Warning يحتاج override صريح.
+- عند النجاح تقفل الملاحظات ويتحول `CourtState.phase` إلى `opening`.
+- `setPrivateBriefForSession` يعيد حساب readiness فورًا ويتحقق من تطابق Role الـBrief مع الدور المعيّن.
+- Disconnect أثناء Preparation لا يلغي القضية؛ يعيد حساب readiness ويظهر كـHard Blocker للدور الأساسي بدل خلق حكم أو إلغاء تلقائي.
+- أضيف اختبار أن public PreparationState لا يحتوي نصوص الذاكرة/الملاحظات/الأسرار.
+
+**Reason**
+- وصل مرحلة التحضير بالشبكة مع الحفاظ على قاعدة: الأسرار server-only، الجاهزية ليست deadlock، لكن غياب عنصر عدالة أساسي لا يمكن تجاوزه بزر.
+
+**Remaining**
+- الأدوار المتغيرة ليست بعد ضمن Preparation لأن Case Composer لم يوزعها على البشر.
+- أثناء المحكمة ستكون هناك Consultations جديدة/مؤقتة بإذن أو مورد؛ حاليًا كتابة consultation محصورة بمرحلة Preparation فقط.
+- reconnect identity الفعلي لم يُبنَ بعد؛ disconnect الحالي يبقى hard blocker حتى نظام الجلسات يعيد ربط الهوية.
+
+**Next**
+- أول deterministic Case DNA→Blueprint composer، ثم ربطه بالـPrivate Briefs والـvariable-role preparation.

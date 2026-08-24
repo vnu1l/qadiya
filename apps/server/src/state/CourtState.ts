@@ -9,6 +9,8 @@ import type {
   JudgeSelectionMethod,
   LobbyRules,
   PlayerRole,
+  PreparationPublicSnapshot,
+  PreparationStage,
   RoleAllocationPublicSnapshot,
   RoleAllocationStage,
   RolePreference,
@@ -67,12 +69,21 @@ export class RoleAllocationState extends Schema {
   @type({ map: PendingDefenseRequestState }) pendingDefenseRequests = new MapSchema<PendingDefenseRequestState>();
 }
 
+export class PreparationState extends Schema {
+  @type('string') stage: PreparationStage = 'inactive';
+  @type(['string']) participantSessionIds = new ArraySchema<string>();
+  @type(['string']) readySessionIds = new ArraySchema<string>();
+  @type('number') hardBlockerCount = 0;
+  @type('number') warningCount = 0;
+}
+
 export class CourtState extends Schema {
   @type('string') phase: CourtPhase = 'lobby';
   @type('string') currentSpeakerId = '';
   @type('string') hostSessionId = '';
   @type(LobbyRulesState) rules = new LobbyRulesState();
   @type(RoleAllocationState) roleAllocation = new RoleAllocationState();
+  @type(PreparationState) preparation = new PreparationState();
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: DefenseRepresentationState }) defenseRepresentations = new MapSchema<DefenseRepresentationState>();
 }
@@ -170,4 +181,20 @@ export function resetRoleAllocationState(target: RoleAllocationState): void {
   target.prosecutionSessionId = '';
   target.requiredDefenseLawyerCount = 0;
   target.pendingDefenseRequests.clear();
+}
+
+export function applyPreparationSnapshot(target: PreparationState, snapshot: PreparationPublicSnapshot): void {
+  target.stage = snapshot.stage;
+  replaceStringArray(target.participantSessionIds, snapshot.participantPlayerIds);
+  replaceStringArray(target.readySessionIds, snapshot.readyPlayerIds);
+  target.hardBlockerCount = snapshot.hardBlockerCount;
+  target.warningCount = snapshot.warningCount;
+}
+
+export function resetPreparationState(target: PreparationState): void {
+  target.stage = 'inactive';
+  target.participantSessionIds.splice(0, target.participantSessionIds.length);
+  target.readySessionIds.splice(0, target.readySessionIds.length);
+  target.hardBlockerCount = 0;
+  target.warningCount = 0;
 }

@@ -2,23 +2,29 @@ import { Client, Room } from '@colyseus/core';
 import {
   isSessionKind,
   rulesForSession,
+  type CoreRoleAllocationPlan,
   type DefenseRepresentationPlan,
   type LobbyPlayerProfile,
+  type PreparationParticipant,
+  type PreparationPublicSnapshot,
   type PrivatePlayerBrief,
   type RoleAllocationPublicSnapshot,
   type SessionKind,
 } from '@qadiya/shared';
 import { sanitizePrivateRulesPatch, sanitizeRolePreferences } from '../domain/lobbyInput';
+import { PreparationCoordinator, PreparationError } from '../domain/preparationCoordinator';
 import { PrivateCaseVault } from '../domain/privateCaseVault';
 import { RoleAllocationCoordinator, RoleAllocationError } from '../domain/roleAllocationCoordinator';
 import { applyCoreRolePlan } from '../domain/roleTransaction';
 import {
   applyLobbyRulesState,
+  applyPreparationSnapshot,
   applyRoleAllocationSnapshot,
   applyRolePreferencesState,
   CourtState,
   lobbyRulesFromState,
   PlayerState,
+  resetPreparationState,
   resetRoleAllocationState,
 } from '../state/CourtState';
 
@@ -63,10 +69,17 @@ function sanitizePrivateDefensePlan(payload: unknown): DefenseRepresentationPlan
   return result;
 }
 
+function sanitizeRetainedNotes(payload: unknown): string[] | null {
+  if (!Array.isArray(payload) || payload.length > 10) return null;
+  if (!payload.every((item) => typeof item === 'string')) return null;
+  return payload as string[];
+}
+
 export class CourtRoom extends Room<CourtState> {
   maxClients = 12;
   private readonly privateCaseVault = new PrivateCaseVault();
   private roleAllocation?: RoleAllocationCoordinator;
+  private preparation?: PreparationCoordinator;
 
   onCreate(options: { sessionKind?: unknown } = {}) {
     const rules = rulesForSession(normalizedSessionKind(options.sessionKind));
@@ -112,8 +125,8 @@ export class CourtRoom extends Room<CourtState> {
       this.runAllocationAction(client, (coordinator) => coordinator.castJudgeVote(client.sessionId, candidateSessionId));
     });
 
-    // Manual close is exposed only to a Private host. Casual/Ranked will use a
-    // server timer/policy; clients must never decide when a public election ends.
+    // Manual close is exposed only to a Private host. Casual/Ranked use a server
+    // timer/policy; public clients must never decide when an election ends.
     this.onMessage('roles:judge-vote:close', (client) => {
       if (this.state.rules.sessionKind !== 'private' || this.state.hostSessionId !== client.sessionId) return;
       this.runAllocationAction(client, (coordinator) => coordinator.closeJudgeVote());
@@ -178,6 +191,92 @@ export class CourtRoom extends Room<CourtState> {
         return;
       }
       this.runAllocationAction(client, (coordinator) => coordinator.setPrivateDefenseRepresentations(plan));
+    });
+
+    this.onMessage('preparation:ready', (client, value: unknown) => {
+      if (this.state.phase !== 'preparation' || typeof value !== 'boolean') return;
+      this.runPreparationAction(client, (coordinator) => coordinator.markReady(client.sessionId, value));
+    });
+
+    this.onMessage('preparation:notes:set', (client, payload: unknown) => {
+      if (this.state.phase !== 'preparation' || !this.preparation) return;
+      const notes = sanitizeRetainedNotes(payload);
+      if (!notes) {
+        client.send('preparation:error', { code: 'INVALID_RETAINED_NOTES_PAYLOAD', message: 'Invalid retained notes payload.' });
+        return;
+      }
+
+      try {
+        const result = this.preparation.setRetainedNotes(client.sessionId, notes);
+        this.syncPreparation(this.preparation.getSnapshot());
+        if (result.ok) client.send('preparation:notes', { notes: result.notes, locked: false });
+        else client.send('preparation:error', { code: result.code, message: result.message });
+      } catch (error) {
+        this.sendPreparationError(client, error);
+      }
+    });
+
+    this.onMessage('preparation:notes:request', (client) => {
+      const brief = this.privateCaseVault.getOwnBrief(client.sessionId);
+      if (!brief) return;
+      client.send('preparation:notes', {
+        notes: this.privateCaseVault.getRetainedNotes(client.sessionId),
+        locked: this.privateCaseVault.isRetainedNotesLocked(client.sessionId),
+      });
+    });
+
+    this.onMessage('preparation:consultations:request', (client) => {
+      if (!this.preparation) return;
+      try {
+        client.send('preparation:consultations', this.preparation.getOwnConsultations(client.sessionId));
+      } catch (error) {
+        this.sendPreparationError(client, error);
+      }
+    });
+
+    this.onMessage('preparation:consultation:note', (client, payload: unknown) => {
+      if (this.state.phase !== 'preparation' || !this.preparation || !payload || typeof payload !== 'object') return;
+      const body = payload as Record<string, unknown>;
+      if (typeof body.consultationId !== 'string' || typeof body.text !== 'string') return;
+
+      try {
+        const consultation = this.preparation.appendConsultationNote(
+          client.sessionId,
+          body.consultationId.slice(0, 160),
+          body.text.slice(0, 1000),
+        );
+        if (!consultation) {
+          client.send('preparation:error', { code: 'CONSULTATION_ACCESS_DENIED', message: 'Consultation not found or access denied.' });
+          return;
+        }
+
+        for (const participantId of consultation.participantPlayerIds) {
+          this.clientBySessionId(participantId)?.send('preparation:consultation', consultation);
+        }
+      } catch (error) {
+        this.sendPreparationError(client, error);
+      }
+    });
+
+    this.onMessage('preparation:open', (client, payload: unknown) => {
+      if (this.state.phase !== 'preparation' || !this.preparation || !isJudge(this.state.players.get(client.sessionId))) return;
+      const overrideSoftWarnings = Boolean(
+        payload && typeof payload === 'object' && (payload as Record<string, unknown>).overrideSoftWarnings === true,
+      );
+
+      try {
+        const result = this.preparation.attemptOpenCourt(overrideSoftWarnings);
+        this.syncPreparation(this.preparation.getSnapshot());
+        if (!result.opened) {
+          client.send('preparation:open:blocked', result);
+          return;
+        }
+
+        this.state.phase = 'opening';
+        this.broadcast('preparation:opened', { byJudgeSessionId: client.sessionId });
+      } catch (error) {
+        this.sendPreparationError(client, error);
+      }
     });
 
     this.onMessage('speaker:request', (client) => {
@@ -251,10 +350,18 @@ export class CourtRoom extends Room<CourtState> {
     }
   }
 
-  /** Server-side integration point for the future Case Engine/Preparation service. */
+  /** Server-side integration point for Case Composer/Preparation. */
   setPrivateBriefForSession(sessionId: string, brief: PrivatePlayerBrief): void {
-    if (!this.state.players.has(sessionId)) throw new Error(`Unknown room session ${sessionId}.`);
+    const player = this.state.players.get(sessionId);
+    if (!player) throw new Error(`Unknown room session ${sessionId}.`);
+    if (player.role !== 'unassigned' && player.role !== brief.role) {
+      throw new Error(`Private brief role ${brief.role} does not match assigned role ${player.role}.`);
+    }
+
     this.privateCaseVault.setPlayerBrief(sessionId, brief);
+    if (this.preparation && this.state.phase === 'preparation') {
+      this.syncPreparation(this.preparation.refresh());
+    }
   }
 
   onJoin(client: Client, options: { displayName?: unknown }) {
@@ -282,6 +389,8 @@ export class CourtRoom extends Room<CourtState> {
 
     if (this.state.phase === 'role-allocation') {
       this.cancelRoleAllocation('player-disconnected');
+    } else if (this.state.phase === 'preparation' && this.preparation) {
+      this.syncPreparation(this.preparation.refresh());
     }
 
     if (this.state.hostSessionId === client.sessionId) {
@@ -295,6 +404,7 @@ export class CourtRoom extends Room<CourtState> {
   onDispose() {
     this.privateCaseVault.clear();
     this.roleAllocation = undefined;
+    this.preparation = undefined;
   }
 
   private lobbyProfiles(): LobbyPlayerProfile[] {
@@ -358,6 +468,7 @@ export class CourtRoom extends Room<CourtState> {
       return;
     }
 
+    this.startPreparation(plan);
     this.broadcast('roles:allocation:complete', {
       judgeSessionId: plan.judgePlayerId,
       prosecutionSessionId: plan.prosecutionPlayerId,
@@ -366,12 +477,53 @@ export class CourtRoom extends Room<CourtState> {
     this.roleAllocation = undefined;
   }
 
+  private startPreparation(plan: CoreRoleAllocationPlan): void {
+    const participants = new Map<string, PreparationParticipant>();
+    const add = (playerId: string, role: PreparationParticipant['role']) => {
+      participants.set(playerId, { playerId, role, requiredForOpening: true });
+    };
+
+    add(plan.judgePlayerId, 'judge');
+    add(plan.prosecutionPlayerId, 'prosecution');
+    for (const defendantId of plan.defendantPlayerIds) add(defendantId, 'defendant');
+    for (const representation of plan.defenseRepresentations) {
+      if (representation.lawyerPlayerId) add(representation.lawyerPlayerId, 'defense');
+    }
+
+    resetPreparationState(this.state.preparation);
+    this.preparation = new PreparationCoordinator({
+      participants: [...participants.values()],
+      defenseRepresentations: plan.defenseRepresentations,
+      vault: this.privateCaseVault,
+      isConnected: (playerId) => this.state.players.get(playerId)?.connected === true,
+    });
+    this.syncPreparation(this.preparation.start());
+  }
+
+  private syncPreparation(snapshot: PreparationPublicSnapshot): void {
+    applyPreparationSnapshot(this.state.preparation, snapshot);
+  }
+
+  private runPreparationAction(
+    client: Client,
+    action: (coordinator: PreparationCoordinator) => PreparationPublicSnapshot,
+  ): void {
+    if (this.state.phase !== 'preparation' || !this.preparation) return;
+    try {
+      this.syncPreparation(action(this.preparation));
+    } catch (error) {
+      this.sendPreparationError(client, error);
+    }
+  }
+
   private cancelRoleAllocation(reason: string): void {
     this.roleAllocation = undefined;
+    this.preparation = undefined;
     this.state.phase = 'lobby';
     this.state.currentSpeakerId = '';
     this.state.defenseRepresentations.clear();
     resetRoleAllocationState(this.state.roleAllocation);
+    resetPreparationState(this.state.preparation);
 
     for (const candidate of this.state.players.values()) {
       candidate.role = 'unassigned';
@@ -400,5 +552,13 @@ export class CourtRoom extends Room<CourtState> {
       return;
     }
     this.broadcast('roles:allocation:error', { code: 'ROLE_ALLOCATION_INTERNAL', message: 'Role allocation could not continue.' });
+  }
+
+  private sendPreparationError(client: Client, error: unknown): void {
+    if (error instanceof PreparationError) {
+      client.send('preparation:error', { code: error.code, message: error.message });
+      return;
+    }
+    client.send('preparation:error', { code: 'PREPARATION_INTERNAL', message: 'Preparation action could not continue.' });
   }
 }
