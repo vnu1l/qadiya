@@ -475,30 +475,31 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - المشروع **Pre-alpha foundation**.
 - Phase 0 continuity foundation مكتمل عمليًا ومفروض عبر CI.
 - Phase 2 بدأ: Game Shell ومشاهد منفصلة وCamera registry.
-- Phase 4/5 foundation بدأ: shared lobby/role contracts وCase Engine structured primitives.
+- Phase 4/5 foundation مستمر: shared contracts + role fairness + Case Engine structured primitives.
 
 ## ما تم إنجازه في آخر تغيير برمجي
 
-- تعريف Roles/RolePreference/RoleHistory/RoleAssignment كمصدر مشترك بدل strings متفرقة.
-- تعريف قواعد Casual/Ranked/Private، مع Private min=3 وPublic target=6–10 وmulti-defendant flags.
-- توسيع Court Event contract ليعكس event-sourced direction.
-- إعادة بناء Case Engine إلى model منظم: Facts, Timeline, Characters, Knowledge provenance, Evidence provenance, Role Engagement, Charges.
-- إضافة Validation يمنع references المكسورة ودرجات خارج 0..1 وTimeline ranges المستحيلة وhearsay بلا مصدر.
-- إضافة Unit Tests للـvalidator وربط `pnpm test` بالـCI.
+- إضافة server-side role allocator قابل للاختبار بدل Random خام.
+- اختيار المتهمين يستبعد من لعب المتهم مؤخرًا بالكامل عندما توجد بدائل كافية، ثم يستخدم Weighted selection دون تكرار.
+- رفض Role preference يجعل وزن الدور صفرًا؛ النظام لا يفرض الدور على من رفضه.
+- Judge candidates لا تشترط تاريخ قضاء سابق، حتى يستطيع المبتدئ تجربة الدور في Casual.
+- Defense candidate ranking يبقي المحامين الجدد ظاهرين، وCourt-appointed pool يحترم opt-in للتعيين التلقائي.
+- إصلاح `CourtRoom`: `speaker:request` أصبح طلبًا فقط؛ منح المتحدث الرسمي محصور بالقاضي، والمتحدث/القاضي يستطيع إنهاء الدور.
+- إضافة اختبارات للـrole allocator وربطها بسلسلة `pnpm test` الحالية.
 
 ## الخطوة التالية الفورية
 
-1. Role allocation fairness algorithm: weighted defendant anti-repeat + judge candidate eligibility + defense rookie-safe candidate ranking.
-2. Timeline feasibility/travel constraints.
-3. Knowledge precision rules والتحقق من أن الدقة لها provenance منطقي.
-4. Case DNA + variable-role scoring/adaptation.
-5. ربط shared lobby contracts بخادم Colyseus بدل raw role/phase strings.
+1. Master Timeline feasibility: location graph/travel time ومنع وجود شخصية في مكانين مستحيلين.
+2. Knowledge precision rules بحيث exact timestamp/location يحتاج مصدرًا يبرر الدقة.
+3. Case DNA + variable role scoring/adaptation.
+4. Typed lobby state ورسائل server لتطبيق role preferences/assignments بأمان.
+5. Preparation contracts والـprivileged defense consultation.
 
 ## ملاحظات لأي AI لاحق
 
-- لا ترجع Case Engine إلى interface واحد مبسط؛ الملفات الجديدة هي بداية التقسيم المقصود.
+- `recentAssignments` مدخل محسوب من persistence مستقبلًا؛ لا تخزنه كرقم يتلاعب به العميل.
+- role allocator server-authoritative؛ العميل يعرض المرشحين ولا يقرر fairness بنفسه.
+- الـrookie boost الحالي لترتيب الظهور، وليس زيادة قوة داخل القضية.
+- لا تعيد `speaker:request` لمنح الكلمة مباشرة؛ هذه كانت ثغرة تم إغلاقها.
 - `accuracy` و`confidence` منفصلتان عمدًا: شاهد قد يكون واثقًا ومخطئًا.
-- Evidence `reliability` لا تعني أن الاستنتاج القانوني صحيح؛ `ambiguity` منفصلة عمدًا.
-- لا تستخدم Role preference كضمان لاختيار الدور؛ fairness/anti-repeat أعلى منها.
-- لا تغيّر Private min=3 أو multi-defendant support لتسهيل allocator.
 - قبل تعديل source: حدّث هذا الملف في نفس commit.
