@@ -14,12 +14,33 @@ const webDist = resolve(process.cwd(), 'apps/web/dist');
 const webIndex = resolve(webDist, 'index.html');
 const startedAt = new Date().toISOString();
 
+const railwayRepository = [process.env.RAILWAY_GIT_REPO_OWNER, process.env.RAILWAY_GIT_REPO_NAME]
+  .filter(Boolean)
+  .join('/');
+
 const buildInfo = Object.freeze({
   version: QADIYA_VERSION,
-  commitSha: process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? 'local',
-  branch: process.env.RAILWAY_GIT_BRANCH ?? 'local',
-  deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? 'local',
-  repository: [process.env.RAILWAY_GIT_REPO_OWNER, process.env.RAILWAY_GIT_REPO_NAME].filter(Boolean).join('/') || 'local',
+  platform:
+    process.env.RENDER === 'true'
+      ? 'render'
+      : process.env.RAILWAY_ENVIRONMENT
+        ? 'railway'
+        : process.env.GIT_COMMIT_SHA
+          ? 'ci-container'
+          : 'local',
+  commitSha:
+    process.env.RENDER_GIT_COMMIT ??
+    process.env.RAILWAY_GIT_COMMIT_SHA ??
+    process.env.GIT_COMMIT_SHA ??
+    'local',
+  branch: process.env.RENDER_GIT_BRANCH ?? process.env.RAILWAY_GIT_BRANCH ?? 'local',
+  deploymentId:
+    process.env.RENDER_INSTANCE_ID ??
+    process.env.RENDER_SERVICE_ID ??
+    process.env.RAILWAY_DEPLOYMENT_ID ??
+    'local',
+  repository: (process.env.RENDER_GIT_REPO_SLUG ?? railwayRepository) || 'local',
+  publicUrl: process.env.RENDER_EXTERNAL_URL ?? undefined,
   startedAt,
 });
 
@@ -72,4 +93,4 @@ const gameServer = new Server({
 gameServer.define('court', CourtRoom);
 
 await gameServer.listen(port);
-console.log(`[QADIYA] ${buildInfo.commitSha.slice(0, 12)} listening on :${port}`);
+console.log(`[QADIYA] ${buildInfo.platform} ${buildInfo.commitSha.slice(0, 12)} listening on :${port}`);

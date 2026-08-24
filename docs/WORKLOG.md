@@ -313,3 +313,24 @@
 
 **Next**
 - إجراء الربط الخارجي مع Railway مرة واحدة، ثم العودة مباشرة إلى deterministic Case Composer دون تغيير معمارية النشر.
+
+---
+
+## 2026-08-24 — Render Free live-preview blueprint
+
+**Changed**
+- أضيف `render.yaml` كتعريف declarative لبيئة Preview: خدمة Web واحدة، Docker، Free، Frankfurt، branch `main`, و`autoDeployTrigger: checksPass`.
+- Healthcheck في Render أصبح `/health` من نفس العقد المستخدم في Docker/CI.
+- `apps/server` أصبح يتعرف على متغيرات Render الافتراضية (`RENDER_GIT_COMMIT`, `RENDER_GIT_BRANCH`, `RENDER_GIT_REPO_SLUG`, `RENDER_EXTERNAL_URL`) ويعرض `platform: render` في build metadata.
+- `docs/DEPLOYMENT.md` نُقل من خطوات Railway المحددة إلى عقد Preview حالي على Render مع بقاء Docker الواحد مستقلًا عن المزود.
+- `docs/STATUS.md` يسجل أن الجزء الوحيد المتبقي للحصول على URL حي هو OAuth/إنشاء Blueprint داخل حساب Render مرة واحدة.
+
+**Reason**
+- الحصول على رابط تطوير حي مجاني يمكن التحقق منه من Git SHA، مع بقاء Frontend وBackend على نفس النسخة وعدم ربط المشروع بمزود استضافة واحد.
+
+**Remaining**
+- لا يوجد URL حي حتى يربط مالك الحساب GitHub بـRender وينشئ Blueprint؛ هذه البيئة لا تملك Render connector ولا يجوز ادعاء نجاح Deployment قبل ذلك.
+- Render Free ينام عند الخمول وfilesystem مؤقت، لذلك هو Preview فقط وليس Production النهائي.
+
+**Next**
+- إنشاء Blueprint من `vnu1l/qadiya` في Render مرة واحدة، ثم التحقق من `/health` و`/api/build` وSHA؛ بعدها العودة فورًا إلى نموذج عناصر التهمة وCase Composer.
