@@ -237,3 +237,29 @@
 
 **Next**
 - Preparation coordinator + retained notes/consultation lifecycle، ثم أول deterministic DNA→Blueprint composer.
+
+---
+
+## 2026-08-24 — Preparation domain and bounded retained memory
+
+**Changed**
+- أضيف `PreparationCoordinator` مستقل عن الشبكة، يبني readiness من حالة الاتصال ووجود الـPrivate Brief بدل Step wizard.
+- عدم ضغط Ready أصبح Soft Warning فقط؛ يمكن تجاوز التحذيرات صراحة، بينما غياب لاعب/Brief أساسي يبقى Hard Blocker لا يمكن تجاوزه.
+- الدفاع المشترك ينشئ Consultation واحدة خاصة للمحامي وكل المتهمين الذين يمثلهم، ولا يستطيع أي outsider قراءتها أو الكتابة فيها.
+- أضيف retained-memory storage داخل `PrivateCaseVault` مع سقف مطلق للعدد، حد لكل ملاحظة، وحد إجمالي للحروف كي لا تتحول الملاحظات إلى نسخة من القصة الكاملة.
+- الملاحظات لا تُقص بصمت إذا تجاوزت الحدود؛ يُرفض التحديث بكود واضح.
+- عند افتتاح المحكمة تُقفل retained notes ولا يمكن تعديلها بعدها.
+- أضيف `ensureConsultation` لدعم استعادة/إعادة دخول preparation بصورة idempotent إذا كانت مجموعة المشاركين نفسها.
+- أضيفت عقود Shared لحالة Preparation العامة فقط؛ النصوص الخاصة لا تدخل synchronized state.
+- أضيفت اختبارات للـsoft override، hard blockers، shared counsel privacy، optional-role warnings، حدود الملاحظات وقفلها.
+
+**Reason**
+- تطبيق فكرة النسيان كمهارة بشرية بدون السماح بنسخ الـBrief كاملًا، ومنع زر جاهزية من صناعة Dead End مع الحفاظ على شروط العدالة الحقيقية.
+
+**Remaining**
+- الـCoordinator لم يُربط بعد بـCourtRoom/Colyseus state.
+- لا توجد Memory Recall cards بعد؛ ستستخدم نفس Vault ولن تخلق Facts جديدة.
+- optional variable-role participants ستأتي من Case Composer، بينما أول ربط بالغرفة سيبدأ بالأدوار الأساسية.
+
+**Next**
+- ربط PreparationCoordinator بالـCourtRoom والـpublic preparation state، ثم deterministic DNA→Blueprint composer.
