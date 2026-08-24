@@ -9,4 +9,3 @@ services:
     healthCheckPath: /health
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    maxShutdownDelaySeconds: 30
