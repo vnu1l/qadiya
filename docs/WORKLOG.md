@@ -184,3 +184,30 @@
 
 **Next**
 - RoleAllocationCoordinator الذي يحول الاختيارات إلى لاعبين فعليين، ثم أول DNA→Blueprint composer.
+
+---
+
+## 2026-08-24 — Interactive core role allocation coordinator
+
+**Changed**
+- أضيف `RoleAllocationCoordinator` كطبقة orchestration مستقلة لا تعدل Colyseus state مباشرة.
+- يدعم Weighted/Random/Private defendant selection مع احترام قبول الدور والجاهزية.
+- Casual judge vote يرشح candidates مؤهلين، يمنع self-vote، ويملك zero-vote/tie recovery عبر fairness weights بدل deadlock.
+- Defendant-choice defense أصبح تفاعليًا: المتهم يطلب محاميًا، والمحامي يقبل أو يرفض قبل اعتبار التمثيل مكتملًا.
+- رفض المحامي يُحفظ لذلك المتهم حتى لا يعيده Court-appointed fallback لنفس العلاقة بشكل صامت.
+- Court-appointed fallback يحترم `allowAutomaticAssignment` ولا يفرض الدور على من لم يسمح به.
+- Multi-defendant defense يدعم shared counsel وself representation، لكنه لا يكتمل إلا إذا طابق العدد الفعلي لمحامي الدفاع البشري المقاعد المطلوبة للقضية.
+- Private host hooks موجودة لاختيار المتهم/القاضي/خطة الدفاع مع نفس فحوص النزاهة.
+- الادعاء يُعين في النهاية من لاعب متبقٍ وافق على الدور، لمنع core-role collision.
+- أضيفت اختبارات لتدفق Casual، رفض المحامي، 3-player Private self-representation، عدد مقاعد الدفاع، self-vote، وعدم فرض الادعاء.
+
+**Reason**
+- تحويل تصميم توزيع الأدوار من دوال منفصلة إلى مسار واحد يمكن للغرفة تشغيله دون اختصار تفاعل اللاعبين أو خلق نصف حالة غير صالحة.
+
+**Remaining**
+- الـCoordinator يعمل حاليًا على snapshot للاعبين؛ CourtRoom integration يجب أن يعيد التحقق من الاتصال/القبول قبل `applyCoreRolePlan`، وهو أصلًا يملك validation ذرّيًا لهذا الغرض.
+- timeouts لم تُربط بعد، لكن fallback paths موجودة كي لا نحتاج اختراع سلوك جديد لاحقًا.
+- تحديد العدد المطلوب لمحامي الدفاع سيأتي من Case Composer/role adaptation بدل قيمة خارجية عند اكتمال الربط.
+
+**Next**
+- ربط coordinator بالـCourtRoom ورسائل التصويت/اختيار المحامي، ثم Preparation coordinator.
