@@ -4,37 +4,37 @@ Last updated: 2026-08-24
 
 ## Current milestone
 
-**Phase 4/5 foundation — role fairness, authoritative room behavior, Case Engine core**
+**Phase 4/5 foundation — authoritative lobby state + Case Engine core**
 
 ## Completed
 
-- continuity governance and CI memory gate.
-- modular Game Shell, scenes, and camera registry.
-- shared role/lobby/court contracts.
-- Case Engine structured truth/timeline/knowledge/evidence/charge models and validator tests.
-- server-side weighted defendant allocator with anti-repeat behavior.
-- judge candidate ranking that does not lock beginners out of the role.
-- defense candidate ranking that keeps rookies visible and honors automatic-assignment opt-in.
-- CourtRoom floor control fixed: a player can request the floor, but only the assigned judge can grant official speaking status.
-- server role-allocation unit tests.
+- durable continuity/memory/worklog system enforced by CI.
+- modular Game Shell/scenes/camera registry.
+- shared roles, lobby rules, Court Events and role preferences.
+- weighted role fairness and judge-controlled Official Floor.
+- Case Engine Facts/Timeline/Knowledge/Evidence/Charges + travel/precision validation.
+- Case DNA and variable-role adaptation including 3-player System Character path.
+- Colyseus `CourtState` now has typed lobby rules, player readiness, role preferences, host and session kind.
+- server sanitizes role preference payloads and Private settings; host-only Private rule updates.
+- Private min=3/max=12 and Casual/Ranked max=10 are server-side room rules, not client assumptions.
 
 ## In progress
 
-- deeper Case Engine timeline and knowledge validation.
-- typed lobby state wiring into Colyseus.
-- design tokens and camera runtime hardening.
+- actual role assignment application/state transition.
+- preparation/privilege contracts.
+- client connection to authoritative lobby.
 
 ## Next exact implementation steps
 
-1. Add travel/location feasibility to Master Timeline validation.
-2. Add Case DNA + variable-role value/adaptation system.
-3. Introduce typed private lobby settings on the server and a safe role-assignment application path.
-4. Add preparation-state contracts and privileged defense consultation boundaries.
-5. Continue Visual Foundation with centralized design/motion/layer tokens.
+1. Add server-only role assignment transaction with invariant checks and multi-defendant groups.
+2. Add Preparation state and private knowledge/privilege boundaries that are not included in public room state.
+3. Connect web LobbyScene to Colyseus client with optimistic UI only for harmless local panels.
+4. Add design/motion/layer tokens and evolve Camera Director.
+5. Start Case composition from Case DNA into validated Blueprint.
 
 ## Known limitations right now
 
-- allocator currently consumes precomputed `recentAssignments`; persistence that calculates the rolling history comes later.
-- judge candidate ranking does not yet include Conduct because Conduct persistence is not implemented.
-- court artwork remains CSS placeholder architecture.
-- lobby UI is not connected to Colyseus yet.
+- host transfer is currently first connected remaining player; later persistence/party ownership may refine it.
+- role history/reputation are not yet loaded from database, so allocator persistence inputs remain future work.
+- no authentication or database yet.
+- artwork remains placeholder.

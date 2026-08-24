@@ -6,6 +6,13 @@ export type DefendantSelectionMethod = 'weighted-system' | 'random' | 'private-h
 export type JudgeSelectionMethod = 'candidate-vote' | 'weighted-system' | 'private-host';
 export type DefenseSelectionMethod = 'defendant-choice' | 'court-appointed' | 'private-host';
 
+export const SESSION_KINDS = ['casual', 'ranked', 'private'] as const satisfies readonly SessionKind[];
+export const CASE_COMMITMENTS = ['small', 'standard', 'large', 'long', 'any'] as const satisfies readonly CaseCommitment[];
+
+export function isSessionKind(value: unknown): value is SessionKind {
+  return typeof value === 'string' && (SESSION_KINDS as readonly string[]).includes(value);
+}
+
 export interface LobbyPlayerProfile {
   playerId: string;
   displayName: string;
@@ -29,6 +36,18 @@ export interface LobbyRules {
   allowCrossDefendantContradictions: boolean;
   allowSystemCharacters: boolean;
 }
+
+export type PrivateRulesPatch = Partial<Pick<
+  LobbyRules,
+  | 'commitment'
+  | 'defendantSelection'
+  | 'judgeSelection'
+  | 'defenseSelection'
+  | 'allowMultipleDefendants'
+  | 'maxDefendants'
+  | 'allowCrossDefendantContradictions'
+  | 'allowSystemCharacters'
+>>;
 
 export const DEFAULT_PRIVATE_RULES: Readonly<LobbyRules> = {
   sessionKind: 'private',

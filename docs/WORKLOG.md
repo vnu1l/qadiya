@@ -123,3 +123,26 @@
 
 **Next**
 - Typed Colyseus lobby state ورسائل آمنة للـpreferences/settings، ثم Preparation/privilege contracts.
+
+---
+
+## 2026-08-24 — Authoritative lobby inputs and Private room rules
+
+**Changed**
+- أضيفت constants/type guards مشتركة للأدوار وأنواع الجلسة.
+- Player/Court/Lobby rules أصبحت Colyseus Schema مستقلة بدل classes محلية خام داخل Room.
+- `roles:preferences` يُعقم على السيرفر: unknown roles تُرفض، priority تُقيد، duplicate role يُدمج إلى قيمة واحدة.
+- `private:rules` لا يقبله إلا Host وفي lobby، ولا يستطيع تغيير invariants مثل Private min=3/max=12.
+- تعطيل تعدد المتهمين يجبر `maxDefendants=1` ويعطل cross-defendant contradictions.
+- maxClients مشتق من نوع الجلسة، وPrivate host ينتقل إلى لاعب متصل عند خروج المضيف.
+- readiness أصبحت authoritative room state.
+
+**Reason**
+- منع المتصفح من تقرير قواعد الجلسة أو إرسال values خارج العقود، وتجهيز الخادم لتوزيع الأدوار الحقيقي.
+
+**Remaining**
+- Role assignment transaction نفسها لم تُطبق بعد.
+- لا توجد auth/persistence، لذلك Session ID هو هوية الغرفة المؤقتة فقط.
+
+**Next**
+- Server-only role assignment transaction + Preparation/private knowledge boundaries.

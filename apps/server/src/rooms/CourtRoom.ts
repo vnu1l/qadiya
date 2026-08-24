@@ -1,39 +1,63 @@
 import { Client, Room } from '@colyseus/core';
-import { MapSchema, Schema, type } from '@colyseus/schema';
-import type { CourtPhase, PlayerRole } from '@qadiya/shared';
-
-class PlayerState extends Schema {
-  @type('string') displayName = 'لاعب';
-  @type('string') role: PlayerRole = 'unassigned';
-  @type('boolean') connected = true;
-  @type('boolean') requestedFloor = false;
-}
-
-class CourtState extends Schema {
-  @type('string') phase: CourtPhase = 'lobby';
-  @type('string') currentSpeakerId = '';
-  @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
-}
+import { isSessionKind, rulesForSession, type SessionKind } from '@qadiya/shared';
+import { sanitizePrivateRulesPatch, sanitizeRolePreferences } from '../domain/lobbyInput';
+import {
+  applyLobbyRulesState,
+  applyRolePreferencesState,
+  CourtState,
+  lobbyRulesFromState,
+  PlayerState,
+} from '../state/CourtState';
 
 function isJudge(player: PlayerState | undefined): boolean {
   return player?.role === 'judge';
 }
 
+function normalizedSessionKind(value: unknown): SessionKind {
+  return isSessionKind(value) ? value : 'casual';
+}
+
 export class CourtRoom extends Room<CourtState> {
-  maxClients = 10;
+  maxClients = 12;
 
-  onCreate() {
-    this.setState(new CourtState());
+  onCreate(options: { sessionKind?: unknown } = {}) {
+    const rules = rulesForSession(normalizedSessionKind(options.sessionKind));
+    const state = new CourtState();
+    applyLobbyRulesState(state.rules, rules);
+    this.maxClients = rules.maxPlayers;
+    this.setState(state);
 
-    // Requesting the floor never grants speaking authority by itself.
+    this.onMessage('player:ready', (client, value: unknown) => {
+      if (this.state.phase !== 'lobby') return;
+      const player = this.state.players.get(client.sessionId);
+      if (!player || typeof value !== 'boolean') return;
+      player.ready = value;
+    });
+
+    this.onMessage('roles:preferences', (client, payload: unknown) => {
+      if (this.state.phase !== 'lobby' && this.state.phase !== 'role-allocation') return;
+      const player = this.state.players.get(client.sessionId);
+      if (!player) return;
+      applyRolePreferencesState(player, sanitizeRolePreferences(payload));
+    });
+
+    this.onMessage('private:rules', (client, payload: unknown) => {
+      if (this.state.phase !== 'lobby' || this.state.rules.sessionKind !== 'private') return;
+      if (this.state.hostSessionId !== client.sessionId) return;
+
+      const current = lobbyRulesFromState(this.state.rules);
+      const next = sanitizePrivateRulesPatch(current, payload);
+      applyLobbyRulesState(this.state.rules, next);
+    });
+
     this.onMessage('speaker:request', (client) => {
       const player = this.state.players.get(client.sessionId);
       if (!player?.connected) return;
       player.requestedFloor = true;
     });
 
-    // Only the assigned judge can make another player the official speaker.
-    this.onMessage('speaker:grant', (client, targetSessionId: string) => {
+    this.onMessage('speaker:grant', (client, targetSessionId: unknown) => {
+      if (typeof targetSessionId !== 'string') return;
       const judge = this.state.players.get(client.sessionId);
       const target = this.state.players.get(targetSessionId);
       if (!isJudge(judge) || !target?.connected) return;
@@ -50,10 +74,18 @@ export class CourtRoom extends Room<CourtState> {
     });
   }
 
-  onJoin(client: Client, options: { displayName?: string }) {
+  onJoin(client: Client, options: { displayName?: unknown }) {
     const player = new PlayerState();
-    player.displayName = options.displayName?.trim().slice(0, 32) || 'لاعب';
+    player.displayName =
+      typeof options.displayName === 'string' && options.displayName.trim()
+        ? options.displayName.trim().slice(0, 32)
+        : 'لاعب';
+
     this.state.players.set(client.sessionId, player);
+
+    if (this.state.rules.sessionKind === 'private' && !this.state.hostSessionId) {
+      this.state.hostSessionId = client.sessionId;
+    }
   }
 
   onLeave(client: Client) {
@@ -61,7 +93,15 @@ export class CourtRoom extends Room<CourtState> {
     if (!player) return;
 
     player.connected = false;
+    player.ready = false;
     player.requestedFloor = false;
     if (this.state.currentSpeakerId === client.sessionId) this.state.currentSpeakerId = '';
+
+    if (this.state.hostSessionId === client.sessionId) {
+      const nextHost = [...this.state.players.entries()].find(
+        ([sessionId, candidate]) => sessionId !== client.sessionId && candidate.connected,
+      );
+      this.state.hostSessionId = nextHost?.[0] ?? '';
+    }
   }
 }

@@ -11,8 +11,28 @@ export type VariableRole =
   | 'other';
 
 export type PlayerRole = CoreRole | VariableRole | 'unassigned' | 'spectator' | 'standby';
-
 export type AssignableRole = Exclude<PlayerRole, 'unassigned' | 'spectator' | 'standby'>;
+
+export const ASSIGNABLE_ROLES = [
+  'judge',
+  'defendant',
+  'defense',
+  'prosecution',
+  'witness',
+  'investigator',
+  'expert',
+  'complainant',
+  'victim',
+  'secondary-suspect',
+  'case-related-person',
+  'other',
+] as const satisfies readonly AssignableRole[];
+
+const ASSIGNABLE_ROLE_SET = new Set<string>(ASSIGNABLE_ROLES);
+
+export function isAssignableRole(value: unknown): value is AssignableRole {
+  return typeof value === 'string' && ASSIGNABLE_ROLE_SET.has(value);
+}
 
 export interface RolePreference {
   role: AssignableRole;
