@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -46,7 +43,7 @@ jobs:
           CHANGED="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
           printf '%s\n' "$CHANGED"
 
-          if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|Dockerfile$|package\.json$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|Dockerfile$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
             if ! printf '%s\n' "$CHANGED" | grep -Fxq 'docs/WORKLOG.md'; then
               echo '::error::Source/game/deployment architecture changed without an append-only docs/WORKLOG.md entry. Read AGENTS.md and document what changed, why, remaining risks, and the next exact step.'
               exit 1
@@ -63,21 +60,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: Bootstrap missing dependency lockfile
-        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          pnpm install --lockfile-only
-          git config user.name "qadiya-ci"
-          git config user.email "qadiya-ci@users.noreply.github.com"
-          git switch -C automation/pnpm-lock
-          git add pnpm-lock.yaml
-          git commit -m "chore: generate pnpm lockfile"
-          git push --force origin HEAD:automation/pnpm-lock
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - name: Install bootstrap dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build
         run: pnpm build
@@ -116,3 +100,4 @@ jobs:
           grep -q "$GITHUB_SHA" /tmp/qadiya-health.json
           curl --fail --silent http://127.0.0.1:2567/ > /dev/null
           curl --fail --silent http://127.0.0.1:2567/api/build | grep -q "$GITHUB_SHA"
+          curl --fail --silent http://127.0.0.1:2567/api/build/dependency-lock | grep -q '^lockfileVersion:'

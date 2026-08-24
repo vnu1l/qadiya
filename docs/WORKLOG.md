@@ -350,3 +350,23 @@
 
 **Next**
 - Refresh/Resync للـBlueprint في Render ثم Apply؛ بعد نجاح أول Deploy يتم فحص `/health` و`/api/build` ومطابقة SHA مع `main`.
+
+---
+
+## 2026-08-25 — Dependency lock bootstrap for first Render build
+
+**Changed**
+- أكد أول Render Docker build أن `pnpm-lock.yaml` لم يكن موجودًا في المستودع رغم أن Dockerfile وCI كانا يستخدمان `--frozen-lockfile`.
+- أضيف Bootstrap مؤقت يولد lockfile داخل build stage باستخدام pnpm 10.15.0، ثم يعيد استخدام نفس lockfile في runtime production install بوضع frozen.
+- أضيف endpoint مؤقت `/api/build/dependency-lock` يعرض lockfile الناتج فقط؛ الملف يحتوي metadata للحزم ولا يحتوي أسرارًا.
+- أعيد CI مؤقتًا إلى install غير frozen فقط لتجاوز غياب الملف في checkout، بينما Docker runtime يبقى مثبتًا من lockfile المولد نفسه.
+- أصبح `pnpm-lock.yaml` نفسه ضمن الملفات التي يتطلب تغييرها تحديث WORKLOG.
+
+**Reason**
+- الهدف ليس إبقاء installs غير مقفلة، بل استخراج lockfile الصحيح من بيئة تملك Registry ثم تثبيته فورًا في GitHub، بدل حذف شرط reproducibility بشكل دائم.
+
+**Remaining**
+- هذا Bootstrap مؤقت ويجب ألا يبقى بعد نجاح Deploy واحد واستخراج `pnpm-lock.yaml`.
+
+**Next**
+- انتظار Render deploy، تنزيل `/api/build/dependency-lock`، تثبيت الملف في `main`، ثم حذف endpoint وإرجاع Docker وCI بالكامل إلى `--frozen-lockfile`.
