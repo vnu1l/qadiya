@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
+  },
+  "include": ["src/**/*.ts"]
+}
