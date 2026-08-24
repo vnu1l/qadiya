@@ -68,20 +68,6 @@ export function validateCaseDNA(dna: CaseDNA): CaseDNAIssue[] {
     });
   }
 
-  if (dna.mode === 'single-defendant' && dna.maxDefendants !== 1) {
-    issues.push({
-      code: 'DNA_SINGLE_MODE_MULTIPLE_DEFENDANTS',
-      message: 'single-defendant mode must have exactly one defendant.',
-    });
-  }
-
-  if (dna.mode === 'joint-defendants' && dna.minDefendants < 2) {
-    issues.push({
-      code: 'DNA_JOINT_MODE_NEEDS_MULTIPLE_DEFENDANTS',
-      message: 'joint-defendants mode requires at least two defendants.',
-    });
-  }
-
   if (
     !Number.isInteger(dna.variableRoleBudget.min) ||
     !Number.isInteger(dna.variableRoleBudget.max) ||
@@ -98,7 +84,7 @@ export function validateCaseDNA(dna: CaseDNA): CaseDNAIssue[] {
   if (hasMultipleDefendantModifier !== (dna.maxDefendants > 1)) {
     issues.push({
       code: 'DNA_MULTIPLE_DEFENDANT_MODIFIER_MISMATCH',
-      message: 'multiple-defendants modifier must match the DNA defendant range.',
+      message: 'multiple-defendants modifier must match whether the DNA allows more than one defendant.',
     });
   }
 

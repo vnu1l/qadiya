@@ -8,6 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@qadiya/shared": "workspace:*"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

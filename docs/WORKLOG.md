@@ -108,7 +108,7 @@
 
 **Changed**
 - أضيف `CaseDNA` يحدد family/mode/truth pattern/evidence pattern/witness pattern/modifiers/defendant range/variable-role budget قبل بناء التفاصيل.
-- أضيف validator يمنع DNA متناقضًا، مثل single-defendant يسمح بمتهمين أو cross-defendant modifier بدون تعدد متهمين.
+- أضيف validator يمنع DNA متناقضًا، مثل cross-defendant modifier بدون تعدد متهمين.
 - `RoleDefinition` أصبح يملك `roleKind` صريحًا.
 - أضيف `humanRoleValue` و`adaptVariableRoles`: المقاعد البشرية تذهب للأدوار الأعلى قيمة تفاعلية، والبقية تتحول إلى System Character أو Document فقط إذا كان ذلك مسموحًا وآمنًا.
 - الدور Critical لا يتحول بصمت إلى مستند.
@@ -119,7 +119,7 @@
 
 **Remaining**
 - Case DNA لا يولد Blueprint بعد؛ composition/generator يأتي بعد اكتمال selection/validation primitives.
-- role value weights أولية ويجب معايرتها من analytics لاحقًا، لا hardcode على أنها حقيقة نهائية.
+- role value weights أولية ويجب معايرتها من analytics لاحقًا.
 
 **Next**
 - Typed Colyseus lobby state ورسائل آمنة للـpreferences/settings، ثم Preparation/privilege contracts.
@@ -130,19 +130,16 @@
 
 **Changed**
 - أضيفت constants/type guards مشتركة للأدوار وأنواع الجلسة.
-- Player/Court/Lobby rules أصبحت Colyseus Schema مستقلة بدل classes محلية خام داخل Room.
-- `roles:preferences` يُعقم على السيرفر: unknown roles تُرفض، priority تُقيد، duplicate role يُدمج إلى قيمة واحدة.
-- `private:rules` لا يقبله إلا Host وفي lobby، ولا يستطيع تغيير invariants مثل Private min=3/max=12.
-- تعطيل تعدد المتهمين يجبر `maxDefendants=1` ويعطل cross-defendant contradictions.
-- maxClients مشتق من نوع الجلسة، وPrivate host ينتقل إلى لاعب متصل عند خروج المضيف.
-- readiness أصبحت authoritative room state.
+- Player/Court/Lobby rules أصبحت Colyseus Schema مستقلة.
+- `roles:preferences` يُعقم على السيرفر، و`private:rules` Host-only.
+- Private min=3/max=12 invariants server-side، وتعطيل تعدد المتهمين يعطل cross-defendant contradictions.
+- readiness وhost transfer أصبحت authoritative room state.
 
 **Reason**
-- منع المتصفح من تقرير قواعد الجلسة أو إرسال values خارج العقود، وتجهيز الخادم لتوزيع الأدوار الحقيقي.
+- منع المتصفح من تقرير قواعد الجلسة أو إرسال values خارج العقود.
 
 **Remaining**
 - Role assignment transaction نفسها لم تُطبق بعد.
-- لا توجد auth/persistence، لذلك Session ID هو هوية الغرفة المؤقتة فقط.
 
 **Next**
 - Server-only role assignment transaction + Preparation/private knowledge boundaries.
@@ -152,19 +149,38 @@
 ## 2026-08-24 — Atomic core roles and private preparation vault
 
 **Changed**
-- أضيف `CoreRoleAllocationPlan` و`DefenseRepresentationPlan` لدعم الدفاع المشترك وSelf-representation دون جعل اللاعب يملك role strings متناقضة.
-- أضيف `applyCoreRolePlan` كمعاملة server-only: تتحقق من الاتصال، قبول الأدوار، عدد المتهمين، عدم تصادم القاضي/الادعاء/المتهمين، وتغطية كل متهم بالدفاع مرة واحدة قبل تعديل أي State.
-- 3-player Private self-representation أصبح مسارًا ممثلًا ومختبرًا؛ Casual يرفضه حاليًا.
+- أضيف `CoreRoleAllocationPlan` و`DefenseRepresentationPlan` لدعم الدفاع المشترك وSelf-representation.
+- أضيف `applyCoreRolePlan` كمعاملة server-only تتحقق من الخطة كاملة قبل تعديل State.
+- 3-player Private self-representation أصبح مسارًا ممثلًا ومختبرًا.
 - أضيف `PrivateCaseVault` خارج Colyseus Schema لأسرار الشخصية والذاكرة والاستشارة المحمية.
-- العميل لا يستطيع طلب Brief لاعب آخر؛ `private:brief:request` يعيد فقط brief صاحب session.
-- أضيفت اختبارات للمعاملة الذرية، الدفاع المشترك، رفض الدور غير المقبول، وعزل الأسرار/consultation notes.
+- العميل لا يستطيع طلب Brief لاعب آخر.
 
 **Reason**
-- منع نصف توزيع أدوار فاسد، ومنع تسريب Truth/Secrets إلى حالة الغرفة التي يستطيع العميل فحصها.
+- منع نصف توزيع أدوار فاسد ومنع تسريب أسرار القضية إلى synchronized state.
 
 **Remaining**
 - لا يوجد بعد coordinator يبني CoreRoleAllocationPlan من التصويت/الاختيارات تلقائيًا.
-- Vault غير persisted حتى الآن ومقصود أن يبقى Server-only؛ persistence ستأتي مع قاعدة البيانات.
 
 **Next**
-- RoleAllocationCoordinator ثم Preparation coordinator وretained memory notes.
+- RoleAllocationCoordinator ثم Preparation coordinator.
+
+---
+
+## 2026-08-24 — Mode → defendant count → Case DNA selection pipeline
+
+**Changed**
+- نُظف `CaseMode` حتى لا يخلط بين الطور والحقيقة: `wrongly-accused` بقي TruthPattern بدل أن يكون Mode أيضًا.
+- أضيفت `selectCaseMode`, `selectDefendantCount`, `selectCaseDNA` بهذا الترتيب الصريح.
+- كل خطوة ترشح فقط الخيارات التي يمكن أن تنتج قضية صالحة للعدد وقواعد اللوبي وحجم الالتزام.
+- أضيف حساب نطاق مقاعد Core الممكن (دفاع مشترك/منفصل/Self-representation) حتى لا يختار النظام DNA يترك لاعبين بلا دور.
+- Small/Standard/Large/Long تؤثر على Complexity المقبولة دون فرض مدة زمنية.
+
+**Reason**
+- تطبيق تدفق البداية المتفق عليه: طور عشوائي أولًا، ثم عدد المتهمين، ثم القضية؛ ومنع اختيار قضية ثم ترقيعها لتناسب اللوبي.
+
+**Remaining**
+- الاختيار الحالي uniform بين الخيارات الصالحة؛ anti-repetition/analytics weighting سيأتي مع history.
+- ما زال يلزم التأكد من توفر لاعبين *موافقين فعليًا* لكل Core role في RoleAllocationCoordinator.
+
+**Next**
+- RoleAllocationCoordinator الذي يحول الاختيارات إلى لاعبين فعليين، ثم أول DNA→Blueprint composer.

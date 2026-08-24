@@ -5,7 +5,7 @@ function dna(overrides: Partial<CaseDNA> = {}): CaseDNA {
   return {
     id: 'dna-1',
     family: 'innocence',
-    mode: 'single-defendant',
+    mode: 'standard',
     complexity: 2,
     truthPattern: 'wrongly-accused',
     primaryEvidenceKind: 'digital',
@@ -24,11 +24,9 @@ describe('validateCaseDNA', () => {
     expect(validateCaseDNA(dna())).toEqual([]);
   });
 
-  it('rejects a single-defendant mode that allows multiple defendants', () => {
-    const issues = validateCaseDNA(
-      dna({ minDefendants: 1, maxDefendants: 2, modifiers: ['multiple-defendants'] }),
-    );
-    expect(issues.some((issue) => issue.code === 'DNA_SINGLE_MODE_MULTIPLE_DEFENDANTS')).toBe(true);
+  it('requires the multiple-defendants modifier when a DNA allows multiple defendants', () => {
+    const issues = validateCaseDNA(dna({ maxDefendants: 2 }));
+    expect(issues.some((issue) => issue.code === 'DNA_MULTIPLE_DEFENDANT_MODIFIER_MISMATCH')).toBe(true);
   });
 
   it('requires cross-defendant contradictions to actually allow multiple defendants', () => {

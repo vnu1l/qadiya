@@ -1,10 +1,9 @@
 export type CaseMode =
-  | 'single-defendant'
-  | 'joint-defendants'
-  | 'wrongly-accused'
+  | 'standard'
+  | 'joint-case'
   | 'conflicting-narratives'
-  | 'evidence-heavy'
-  | 'secrets-heavy'
+  | 'evidence-focus'
+  | 'secrets-focus'
   | 'conspiracy';
 
 export type CaseComplexity = 1 | 2 | 3 | 4 | 5;

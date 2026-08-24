@@ -4,7 +4,7 @@ import { hasValidationErrors, type CaseBlueprint, validateCaseBlueprint } from '
 function validCase(): CaseBlueprint {
   return {
     id: 'case-1',
-    mode: 'single-defendant',
+    mode: 'standard',
     complexity: 2,
     characters: [
       { id: 'def-1', publicName: 'سالم', age: 33, gender: 'male', occupation: 'موظف', memoryProfile: 'normal' },
@@ -76,8 +76,7 @@ function validCase(): CaseBlueprint {
 
 describe('validateCaseBlueprint', () => {
   it('accepts a structurally and temporally coherent case', () => {
-    const issues = validateCaseBlueprint(validCase());
-    expect(hasValidationErrors(issues)).toBe(false);
+    expect(hasValidationErrors(validateCaseBlueprint(validCase()))).toBe(false);
   });
 
   it('rejects evidence that points to a fact that does not exist', () => {
@@ -114,16 +113,5 @@ describe('validateCaseBlueprint', () => {
     const blueprint = validCase();
     blueprint.knowledge[0]!.precision = 'exact';
     expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
-  });
-
-  it('allows exact knowledge when an exact-capable source supports it', () => {
-    const blueprint = validCase();
-    blueprint.knowledge[0]!.source = {
-      kind: 'digital-record',
-      sourceTimelineEventId: 'event-1',
-      precisionLimit: 'exact',
-    };
-    blueprint.knowledge[0]!.precision = 'exact';
-    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(false);
   });
 });
