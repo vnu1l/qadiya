@@ -81,3 +81,23 @@
 
 **Next**
 - Master Timeline travel feasibility + Knowledge precision provenance.
+
+---
+
+## 2026-08-24 — Timeline feasibility and source-bounded knowledge precision
+
+**Changed**
+- أضيفت `LocationDefinition` و`TravelLink` إلى Case Blueprint.
+- Validator يحسب أقصر زمن انتقال عبر شبكة المواقع ويرفض الوجود المتداخل في موقعين أو انتقالًا أسرع من الحد الأدنى أو موقعًا بلا مسار معرف.
+- كل `KnowledgeSource` يعلن `precisionLimit`، ولا يمكن لـKnowledgeItem أن يدعي دقة أعلى من مصدره.
+- أضيفت اختبارات للانتقال المستحيل، المواقع المتداخلة، ودقة المعرفة.
+
+**Reason**
+- منع القضايا التي تظلم طرفًا بسبب Timeline مستحيل أو شاهد مُنح توقيتًا دقيقًا بلا أساس معرفي.
+
+**Remaining**
+- travel graph حاليًا ثابت بالدقائق ولا يملك وسيلة نقل/ظروف حركة؛ تضاف فقط إذا احتاج Case DNA لذلك.
+- `precisionLimit` يثبت سقف الدقة لكنه لا يفسر وحده *لماذا* المصدر دقيق؛ لاحقًا يمكن ربطه بأداة/سجل/anchor structured عند الحاجة.
+
+**Next**
+- Case DNA + variable-role scoring/adaptation، ثم typed server lobby state.

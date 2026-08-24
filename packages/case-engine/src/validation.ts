@@ -1,4 +1,10 @@
-import type { CaseBlueprint, RoleEngagement } from './model';
+import type {
+  CaseBlueprint,
+  KnowledgePrecision,
+  RoleEngagement,
+  TimelineEvent,
+  TravelLink,
+} from './model';
 
 export type ValidationSeverity = 'error' | 'warning';
 
@@ -8,6 +14,13 @@ export interface ValidationIssue {
   message: string;
   entityId?: string;
 }
+
+const PRECISION_RANK: Readonly<Record<KnowledgePrecision, number>> = {
+  exact: 0,
+  'narrow-range': 1,
+  approximate: 2,
+  vague: 3,
+};
 
 function inUnitInterval(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= 1;
@@ -35,15 +48,129 @@ function duplicateIds(values: readonly { id: string }[]): string[] {
   return [...duplicates];
 }
 
+interface TravelEdge {
+  to: string;
+  minutes: number;
+}
+
+function buildTravelGraph(links: readonly TravelLink[]): Map<string, TravelEdge[]> {
+  const graph = new Map<string, TravelEdge[]>();
+
+  const addEdge = (from: string, to: string, minutes: number) => {
+    const edges = graph.get(from) ?? [];
+    edges.push({ to, minutes });
+    graph.set(from, edges);
+  };
+
+  for (const link of links) {
+    addEdge(link.fromLocationId, link.toLocationId, link.minTravelMinutes);
+    if (link.bidirectional) addEdge(link.toLocationId, link.fromLocationId, link.minTravelMinutes);
+  }
+
+  return graph;
+}
+
+function shortestTravelMinutes(graph: Map<string, TravelEdge[]>, from: string, to: string): number | null {
+  if (from === to) return 0;
+
+  const distances = new Map<string, number>([[from, 0]]);
+  const visited = new Set<string>();
+
+  while (true) {
+    let current: string | undefined;
+    let currentDistance = Number.POSITIVE_INFINITY;
+
+    for (const [node, distance] of distances) {
+      if (!visited.has(node) && distance < currentDistance) {
+        current = node;
+        currentDistance = distance;
+      }
+    }
+
+    if (current === undefined) return null;
+    if (current === to) return currentDistance;
+
+    visited.add(current);
+    for (const edge of graph.get(current) ?? []) {
+      const candidate = currentDistance + edge.minutes;
+      if (candidate < (distances.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
+        distances.set(edge.to, candidate);
+      }
+    }
+  }
+}
+
+function eventEnd(event: TimelineEvent): number {
+  return event.endMinute ?? event.startMinute;
+}
+
+function validateActorTravel(caseFile: CaseBlueprint, issues: ValidationIssue[]): void {
+  const graph = buildTravelGraph(caseFile.travelLinks);
+  const eventsByActor = new Map<string, TimelineEvent[]>();
+
+  for (const event of caseFile.timeline) {
+    for (const actorId of event.actorIds) {
+      const events = eventsByActor.get(actorId) ?? [];
+      events.push(event);
+      eventsByActor.set(actorId, events);
+    }
+  }
+
+  for (const [actorId, events] of eventsByActor) {
+    const ordered = [...events].sort((a, b) => a.startMinute - b.startMinute || eventEnd(a) - eventEnd(b));
+
+    for (let index = 0; index < ordered.length - 1; index += 1) {
+      const current = ordered[index]!;
+      const next = ordered[index + 1]!;
+      if (current.locationId === next.locationId) continue;
+
+      const currentEnd = eventEnd(current);
+      if (next.startMinute < currentEnd) {
+        issues.push({
+          severity: 'error',
+          code: 'ACTOR_OVERLAPPING_LOCATIONS',
+          message: `Actor ${actorId} is in ${current.locationId} and ${next.locationId} at overlapping times.`,
+          entityId: actorId,
+        });
+        continue;
+      }
+
+      const requiredTravel = shortestTravelMinutes(graph, current.locationId, next.locationId);
+      if (requiredTravel === null) {
+        issues.push({
+          severity: 'error',
+          code: 'ACTOR_LOCATION_UNREACHABLE',
+          message: `Actor ${actorId} has no defined route from ${current.locationId} to ${next.locationId}.`,
+          entityId: actorId,
+        });
+        continue;
+      }
+
+      const availableTravel = next.startMinute - currentEnd;
+      if (availableTravel < requiredTravel) {
+        issues.push({
+          severity: 'error',
+          code: 'ACTOR_TRAVEL_IMPOSSIBLE',
+          message: `Actor ${actorId} has ${availableTravel} minutes to travel from ${current.locationId} to ${next.locationId}, but the minimum is ${requiredTravel}.`,
+          entityId: actorId,
+        });
+      }
+    }
+  }
+}
+
 export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const characterIds = new Set(caseFile.characters.map((character) => character.id));
   const factIds = new Set(caseFile.facts.map((fact) => fact.id));
+  const locationIds = new Set(caseFile.locations.map((location) => location.id));
   const timelineIds = new Set(caseFile.timeline.map((event) => event.id));
 
   const collections = [
     ['character', caseFile.characters],
     ['fact', caseFile.facts],
+    ['location', caseFile.locations],
+    ['travel-link', caseFile.travelLinks],
     ['timeline', caseFile.timeline],
     ['knowledge', caseFile.knowledge],
     ['evidence', caseFile.evidence],
@@ -77,7 +204,36 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
     }
   }
 
+  for (const link of caseFile.travelLinks) {
+    if (!locationIds.has(link.fromLocationId) || !locationIds.has(link.toLocationId)) {
+      issues.push({
+        severity: 'error',
+        code: 'TRAVEL_UNKNOWN_LOCATION',
+        message: `Travel link ${link.id} references an unknown location.`,
+        entityId: link.id,
+      });
+    }
+
+    if (!Number.isFinite(link.minTravelMinutes) || link.minTravelMinutes < 0) {
+      issues.push({
+        severity: 'error',
+        code: 'INVALID_TRAVEL_TIME',
+        message: `Travel link ${link.id} must have a non-negative finite travel time.`,
+        entityId: link.id,
+      });
+    }
+  }
+
   for (const event of caseFile.timeline) {
+    if (!locationIds.has(event.locationId)) {
+      issues.push({
+        severity: 'error',
+        code: 'TIMELINE_UNKNOWN_LOCATION',
+        message: `Timeline event ${event.id} references unknown location ${event.locationId}.`,
+        entityId: event.id,
+      });
+    }
+
     if (event.endMinute !== undefined && event.endMinute < event.startMinute) {
       issues.push({
         severity: 'error',
@@ -110,6 +266,8 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
     }
   }
 
+  validateActorTravel(caseFile, issues);
+
   for (const item of caseFile.knowledge) {
     if (!characterIds.has(item.holderCharacterId)) {
       issues.push({
@@ -134,6 +292,15 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
         severity: 'error',
         code: 'INVALID_KNOWLEDGE_SCORE',
         message: `Knowledge ${item.id} accuracy/confidence must be between 0 and 1.`,
+        entityId: item.id,
+      });
+    }
+
+    if (PRECISION_RANK[item.precision] < PRECISION_RANK[item.source.precisionLimit]) {
+      issues.push({
+        severity: 'error',
+        code: 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION',
+        message: `Knowledge ${item.id} is ${item.precision}, but its source only supports ${item.source.precisionLimit}.`,
         entityId: item.id,
       });
     }

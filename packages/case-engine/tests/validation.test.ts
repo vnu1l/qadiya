@@ -13,16 +13,25 @@ function validCase(): CaseBlueprint {
     defendantIds: ['def-1'],
     facts: [
       { id: 'fact-presence', description: 'سالم كان قرب المستودع.', subjectId: 'def-1', predicate: 'was-near', objectId: 'warehouse' },
+      { id: 'fact-street', description: 'سالم وصل إلى الشارع لاحقًا.', subjectId: 'def-1', predicate: 'was-at', objectId: 'street' },
+    ],
+    locations: [
+      { id: 'warehouse', label: 'المستودع' },
+      { id: 'street', label: 'الشارع الرئيسي' },
+    ],
+    travelLinks: [
+      { id: 'warehouse-street', fromLocationId: 'warehouse', toLocationId: 'street', minTravelMinutes: 5, bidirectional: true },
     ],
     timeline: [
       { id: 'event-1', startMinute: 540, endMinute: 545, locationId: 'warehouse', actorIds: ['def-1'], factIds: ['fact-presence'] },
+      { id: 'event-2', startMinute: 551, locationId: 'street', actorIds: ['def-1'], factIds: ['fact-street'] },
     ],
     knowledge: [
       {
         id: 'knowledge-1',
         holderCharacterId: 'wit-1',
         factId: 'fact-presence',
-        source: { kind: 'direct-observation', sourceTimelineEventId: 'event-1' },
+        source: { kind: 'direct-observation', sourceTimelineEventId: 'event-1', precisionLimit: 'approximate' },
         accuracy: 0.8,
         confidence: 0.95,
         precision: 'approximate',
@@ -65,7 +74,7 @@ function validCase(): CaseBlueprint {
 }
 
 describe('validateCaseBlueprint', () => {
-  it('accepts a structurally coherent case', () => {
+  it('accepts a structurally and temporally coherent case', () => {
     const issues = validateCaseBlueprint(validCase());
     expect(hasValidationErrors(issues)).toBe(false);
   });
@@ -80,7 +89,7 @@ describe('validateCaseBlueprint', () => {
 
   it('rejects knowledge with hearsay but no identified source person', () => {
     const blueprint = validCase();
-    blueprint.knowledge[0]!.source = { kind: 'heard-from-person' };
+    blueprint.knowledge[0]!.source = { kind: 'heard-from-person', precisionLimit: 'approximate' };
 
     const issues = validateCaseBlueprint(blueprint);
     expect(issues.some((issue) => issue.code === 'KNOWLEDGE_MISSING_SOURCE_PERSON')).toBe(true);
@@ -92,5 +101,42 @@ describe('validateCaseBlueprint', () => {
 
     const issues = validateCaseBlueprint(blueprint);
     expect(issues.some((issue) => issue.code === 'INVALID_TIME_RANGE')).toBe(true);
+  });
+
+  it('rejects impossible travel between locations', () => {
+    const blueprint = validCase();
+    blueprint.timeline[1]!.startMinute = 547;
+
+    const issues = validateCaseBlueprint(blueprint);
+    expect(issues.some((issue) => issue.code === 'ACTOR_TRAVEL_IMPOSSIBLE')).toBe(true);
+  });
+
+  it('rejects overlapping presence in two different locations', () => {
+    const blueprint = validCase();
+    blueprint.timeline[1]!.startMinute = 544;
+
+    const issues = validateCaseBlueprint(blueprint);
+    expect(issues.some((issue) => issue.code === 'ACTOR_OVERLAPPING_LOCATIONS')).toBe(true);
+  });
+
+  it('rejects exact knowledge when the source only supports approximate precision', () => {
+    const blueprint = validCase();
+    blueprint.knowledge[0]!.precision = 'exact';
+
+    const issues = validateCaseBlueprint(blueprint);
+    expect(issues.some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
+  });
+
+  it('allows exact knowledge when an exact-capable source supports it', () => {
+    const blueprint = validCase();
+    blueprint.knowledge[0]!.source = {
+      kind: 'digital-record',
+      sourceTimelineEventId: 'event-1',
+      precisionLimit: 'exact',
+    };
+    blueprint.knowledge[0]!.precision = 'exact';
+
+    const issues = validateCaseBlueprint(blueprint);
+    expect(issues.some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(false);
   });
 });

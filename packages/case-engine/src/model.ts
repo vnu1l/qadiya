@@ -30,6 +30,19 @@ export interface CaseFact {
   tags?: string[];
 }
 
+export interface LocationDefinition {
+  id: string;
+  label: string;
+}
+
+export interface TravelLink {
+  id: string;
+  fromLocationId: string;
+  toLocationId: string;
+  minTravelMinutes: number;
+  bidirectional: boolean;
+}
+
 export interface TimelineEvent {
   id: string;
   startMinute: number;
@@ -53,6 +66,11 @@ export interface KnowledgeSource {
   sourceEntityId?: string;
   sourceTimelineEventId?: string;
   note?: string;
+  /**
+   * The finest precision this source can honestly support. A source may still
+   * be wrong; accuracy is modeled separately on KnowledgeItem.
+   */
+  precisionLimit: KnowledgePrecision;
 }
 
 export interface KnowledgeItem {
@@ -122,6 +140,8 @@ export interface CaseBlueprint {
   characters: CaseCharacter[];
   defendantIds: string[];
   facts: CaseFact[];
+  locations: LocationDefinition[];
+  travelLinks: TravelLink[];
   timeline: TimelineEvent[];
   knowledge: KnowledgeItem[];
   evidence: EvidenceDefinition[];
