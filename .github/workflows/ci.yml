@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Enforce project memory update
+      - name: Enforce continuity worklog
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -44,8 +44,8 @@ jobs:
           printf '%s\n' "$CHANGED"
 
           if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|package\.json$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
-            if ! printf '%s\n' "$CHANGED" | grep -Fxq 'docs/PROJECT_MEMORY.md'; then
-              echo '::error::Source/game architecture changed without updating docs/PROJECT_MEMORY.md. Read AGENTS.md and update the canonical project memory in the same change.'
+            if ! printf '%s\n' "$CHANGED" | grep -Fxq 'docs/WORKLOG.md'; then
+              echo '::error::Source/game architecture changed without an append-only docs/WORKLOG.md entry. Read AGENTS.md and document what changed, why, remaining risks, and the next exact step.'
               exit 1
             fi
           fi
