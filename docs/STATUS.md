@@ -4,38 +4,36 @@ Last updated: 2026-08-24
 
 ## Current milestone
 
-**Phase 0 — Governance & Continuity**
+**Phase 2 — Visual Foundation & Game Shell (started after Phase 0 continuity foundation)**
 
 ## Completed
 
 - pnpm monorepo foundation.
 - web/server/shared/case-engine initial packages.
-- initial Svelte pre-alpha screen.
 - initial Colyseus/server foundation.
-- initial CI build/typecheck.
-- `AGENTS.md` mandatory continuity protocol.
-- `docs/PROJECT_MEMORY.md` canonical project memory.
-- `docs/MASTER_PLAN.md` exhaustive execution plan.
-- `docs/DECISIONS.md` long-lived architecture/product decisions.
+- CI build/typecheck.
+- mandatory continuity documentation and AI protocol.
+- CI continuity gate requiring `PROJECT_MEMORY.md` on source changes.
+- repository README links mandatory reading order.
+- monolithic experimental App split into Game Shell, Menu/Lobby/Court scenes, and camera contracts.
 
 ## In progress
 
-- enforce memory updates in CI.
-- link repository entry points to continuity docs.
-- finish Phase 0 governance files.
+- design tokens and scene/camera runtime hardening.
+- shared lobby/role contracts.
+- Case Engine primitive redesign.
 
 ## Next exact implementation steps
 
-1. Add CI memory gate and changelog.
-2. Update README with mandatory reading order.
-3. Refactor monolithic experimental `App.svelte` into Game Shell + scene components.
-4. Add design tokens and camera contracts.
-5. Add shared role/lobby contracts.
-6. Start Case Engine primitive model and deterministic validation tests.
+1. Add design tokens/motion/layer budgets without changing visual direction.
+2. Add shared role/lobby/mode contracts including 3-player private and multi-defendant support.
+3. Replace placeholder lobby data with typed client view models derived from shared contracts.
+4. Build Case Engine IDs, Truth/Timeline/Knowledge primitives and validators.
+5. Add deterministic unit tests before procedural generation.
 
 ## Known limitations right now
 
-- current court/menu UI is experimental and monolithic.
+- court artwork remains CSS placeholder architecture; final layered art pipeline not present yet.
 - no real matchmaking/session flow yet.
 - no production case generation yet.
 - no voice yet.

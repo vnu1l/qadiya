@@ -472,26 +472,28 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 
 - Repository: `vnu1l/qadiya`.
 - Branch الأساسي: `main`.
-- Foundation أولي موجود: pnpm monorepo، web/server/shared/case-engine skeleton، CI أولي، شاشة Svelte تجريبية، وثيقة architecture.
-- المشروع ما زال **Pre-alpha foundation** وليس Gameplay مكتملًا.
+- المشروع **Pre-alpha foundation**.
+- Phase 0 continuity foundation موجود: `AGENTS.md`, `PROJECT_MEMORY`, `MASTER_PLAN`, `DECISIONS`, `STATUS`, `CHANGELOG`, README links، وCI memory gate.
+- الواجهة التجريبية بدأت تتحول من Component واحد إلى Game Shell ومشاهد منفصلة بعقود Camera typed.
 
-## ما تم اعتماده في هذه الدفعة
+## ما تم إنجازه في آخر تغيير برمجي
 
-- إنشاء `AGENTS.md` كبروتوكول إلزامي لأي AI/Developer.
-- إنشاء هذا الملف كذاكرة Canonical دائمة.
-- سيتم إنشاء `MASTER_PLAN`, `DECISIONS`, `STATUS` وربطها بالـCI.
+- تفكيك `App.svelte` إلى `GameShell`, `MenuScene`, `LobbyScene`, `CourtScene`.
+- إضافة `GameSceneId` و`CourtCameraId` وعقود typed للكاميرا واللوبي التجريبي.
+- إضافة Registry مركزي لـCourt Camera presets بدل strings موزعة داخل الشاشة.
+- الإبقاء على CSS الحالي مؤقتًا لتجنب إعادة تصميم بصري قبل تثبيت العقود؛ هذا Placeholder بصري وليس Architecture نهائية.
 
 ## الخطوة التالية الفورية
 
-1. تثبيت وثائق التخطيط والقرارات والحالة.
-2. إضافة CI guard يفرض تحديث هذا الملف عند تعديل source/gameplay architecture.
-3. تفكيك واجهة `App.svelte` التجريبية إلى Game Shell/Scene/Camera foundations حقيقية.
-4. بناء Shared contracts للأدوار واللوبي وحالة المشهد.
-5. بناء Case Engine primitives قبل أي AI generation.
+1. Design tokens/motion/layer budgets.
+2. Shared contracts للأدوار واللوبي والـmode، مع 3-player Private وmulti-defendant من البداية.
+3. Case Engine primitives: IDs, Fact, Timeline, Knowledge provenance, Evidence.
+4. deterministic tests/validators قبل procedural generation.
 
 ## ملاحظات لأي AI لاحق
 
-- لا تبدأ بإعادة تصميم المشروع من الصفر لمجرد أنك تفضّل Framework آخر.
-- لا تعتبر الملفات الحالية نهائية بصريًا؛ الـUI الموجود Foundation تجريبي ويجب تحويله إلى نظام Modular وفق الخطة.
-- قبل تعديل source: عدّل هذا الملف مع ملخص ما ستنجزه/أنجزته في نفس commit أو التغيير.
+- لا تعيد دمج المشاهد في App واحد؛ الفصل الحالي مقصود كأساس Game Shell.
+- لا تجعل Camera Director مجرد buttons نهائية؛ الـregistry الحالي أول خطوة ويجب أن يتطور إلى transforms/layers/queued transitions declarative.
+- لا تعتبر Lobby data الحالية Gameplay حقيقية؛ هي typed view placeholder حتى يصل server/shared contract.
+- قبل تعديل source: حدّث هذا الملف في نفس commit.
 - إذا كان هناك تناقض بين كود قديم وهذه الذاكرة، افترض أن هذه الذاكرة تمثل الهدف الأحدث ما لم يسجل `DECISIONS.md` قرارًا أحدث صريحًا.
