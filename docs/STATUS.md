@@ -4,42 +4,36 @@ Last updated: 2026-08-24
 
 ## Current milestone
 
-**Phase 2 — Visual Foundation & Game Shell (started after Phase 0 continuity foundation)**
+**Phase 4/5 foundation — shared lobby/role contracts + Case Engine primitives**
 
 ## Completed
 
-- pnpm monorepo foundation.
-- web/server/shared/case-engine initial packages.
-- initial Colyseus/server foundation.
-- CI build/typecheck.
-- mandatory continuity documentation and AI protocol.
-- CI continuity gate requiring `PROJECT_MEMORY.md` on source changes.
-- repository README links mandatory reading order.
-- monolithic experimental App split into Game Shell, Menu/Lobby/Court scenes, and camera contracts.
+- continuity governance and CI memory gate.
+- modular Game Shell, scenes, and camera registry.
+- shared role preference/assignment contracts.
+- shared Casual/Ranked/Private lobby rule contracts, including 3-player Private and multi-defendant flags.
+- expanded court event contract.
+- Case Engine structured models for truth facts, timeline, knowledge provenance, evidence provenance, roles, and charges.
+- Case Engine validation for references, scores, timeline ranges, knowledge source rules, and role engagement warnings.
+- deterministic validator unit tests wired into CI.
 
 ## In progress
 
-- design tokens and scene/camera runtime hardening.
-- shared lobby/role contracts.
-- Case Engine primitive redesign.
+- design tokens and camera runtime hardening.
+- role allocation fairness algorithm.
+- deeper Case Engine temporal/knowledge validation.
 
 ## Next exact implementation steps
 
-1. Add design tokens/motion/layer budgets without changing visual direction.
-2. Add shared role/lobby/mode contracts including 3-player private and multi-defendant support.
-3. Replace placeholder lobby data with typed client view models derived from shared contracts.
-4. Build Case Engine IDs, Truth/Timeline/Knowledge primitives and validators.
-5. Add deterministic unit tests before procedural generation.
+1. Add weighted role allocator with anti-repeat and rookie-safe defense selection inputs.
+2. Add Timeline collision/travel feasibility primitives.
+3. Add Knowledge precision/source validation rules beyond reference integrity.
+4. Add Case DNA and variable-role selection scoring.
+5. Wire typed lobby contracts into server room state instead of raw strings.
 
 ## Known limitations right now
 
-- court artwork remains CSS placeholder architecture; final layered art pipeline not present yet.
-- no real matchmaking/session flow yet.
-- no production case generation yet.
-- no voice yet.
-- no database/persistent accounts yet.
-- art assets are placeholders/not final.
-
-## Definition of "do not patch"
-
-If a planned system is not ready, implement the correct interface and a transparent placeholder behind it. Do not replace the required design with a simplified permanent feature just to make the screen appear complete.
+- court artwork remains CSS placeholder architecture.
+- lobby is still visual placeholder and not connected to Colyseus state.
+- Case Engine is structural, not yet a procedural generator.
+- no voice, database, or persistent accounts yet.

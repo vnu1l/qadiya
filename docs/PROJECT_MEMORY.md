@@ -473,27 +473,32 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - Repository: `vnu1l/qadiya`.
 - Branch الأساسي: `main`.
 - المشروع **Pre-alpha foundation**.
-- Phase 0 continuity foundation موجود: `AGENTS.md`, `PROJECT_MEMORY`, `MASTER_PLAN`, `DECISIONS`, `STATUS`, `CHANGELOG`, README links، وCI memory gate.
-- الواجهة التجريبية بدأت تتحول من Component واحد إلى Game Shell ومشاهد منفصلة بعقود Camera typed.
+- Phase 0 continuity foundation مكتمل عمليًا ومفروض عبر CI.
+- Phase 2 بدأ: Game Shell ومشاهد منفصلة وCamera registry.
+- Phase 4/5 foundation بدأ: shared lobby/role contracts وCase Engine structured primitives.
 
 ## ما تم إنجازه في آخر تغيير برمجي
 
-- تفكيك `App.svelte` إلى `GameShell`, `MenuScene`, `LobbyScene`, `CourtScene`.
-- إضافة `GameSceneId` و`CourtCameraId` وعقود typed للكاميرا واللوبي التجريبي.
-- إضافة Registry مركزي لـCourt Camera presets بدل strings موزعة داخل الشاشة.
-- الإبقاء على CSS الحالي مؤقتًا لتجنب إعادة تصميم بصري قبل تثبيت العقود؛ هذا Placeholder بصري وليس Architecture نهائية.
+- تعريف Roles/RolePreference/RoleHistory/RoleAssignment كمصدر مشترك بدل strings متفرقة.
+- تعريف قواعد Casual/Ranked/Private، مع Private min=3 وPublic target=6–10 وmulti-defendant flags.
+- توسيع Court Event contract ليعكس event-sourced direction.
+- إعادة بناء Case Engine إلى model منظم: Facts, Timeline, Characters, Knowledge provenance, Evidence provenance, Role Engagement, Charges.
+- إضافة Validation يمنع references المكسورة ودرجات خارج 0..1 وTimeline ranges المستحيلة وhearsay بلا مصدر.
+- إضافة Unit Tests للـvalidator وربط `pnpm test` بالـCI.
 
 ## الخطوة التالية الفورية
 
-1. Design tokens/motion/layer budgets.
-2. Shared contracts للأدوار واللوبي والـmode، مع 3-player Private وmulti-defendant من البداية.
-3. Case Engine primitives: IDs, Fact, Timeline, Knowledge provenance, Evidence.
-4. deterministic tests/validators قبل procedural generation.
+1. Role allocation fairness algorithm: weighted defendant anti-repeat + judge candidate eligibility + defense rookie-safe candidate ranking.
+2. Timeline feasibility/travel constraints.
+3. Knowledge precision rules والتحقق من أن الدقة لها provenance منطقي.
+4. Case DNA + variable-role scoring/adaptation.
+5. ربط shared lobby contracts بخادم Colyseus بدل raw role/phase strings.
 
 ## ملاحظات لأي AI لاحق
 
-- لا تعيد دمج المشاهد في App واحد؛ الفصل الحالي مقصود كأساس Game Shell.
-- لا تجعل Camera Director مجرد buttons نهائية؛ الـregistry الحالي أول خطوة ويجب أن يتطور إلى transforms/layers/queued transitions declarative.
-- لا تعتبر Lobby data الحالية Gameplay حقيقية؛ هي typed view placeholder حتى يصل server/shared contract.
+- لا ترجع Case Engine إلى interface واحد مبسط؛ الملفات الجديدة هي بداية التقسيم المقصود.
+- `accuracy` و`confidence` منفصلتان عمدًا: شاهد قد يكون واثقًا ومخطئًا.
+- Evidence `reliability` لا تعني أن الاستنتاج القانوني صحيح؛ `ambiguity` منفصلة عمدًا.
+- لا تستخدم Role preference كضمان لاختيار الدور؛ fairness/anti-repeat أعلى منها.
+- لا تغيّر Private min=3 أو multi-defendant support لتسهيل allocator.
 - قبل تعديل source: حدّث هذا الملف في نفس commit.
-- إذا كان هناك تناقض بين كود قديم وهذه الذاكرة، افترض أن هذه الذاكرة تمثل الهدف الأحدث ما لم يسجل `DECISIONS.md` قرارًا أحدث صريحًا.
