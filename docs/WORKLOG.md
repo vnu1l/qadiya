@@ -334,3 +334,19 @@
 
 **Next**
 - إنشاء Blueprint من `vnu1l/qadiya` في Render مرة واحدة، ثم التحقق من `/health` و`/api/build` وSHA؛ بعدها العودة فورًا إلى نموذج عناصر التهمة وCase Composer.
+
+---
+
+## 2026-08-25 — Render Free blueprint compatibility fix
+
+**Changed**
+- أزيل `maxShutdownDelaySeconds` من `render.yaml` بعدما أكد Render أن هذا الحقل غير مدعوم على Free tier.
+
+**Reason**
+- إبقاء الـBlueprint متوافقًا فعليًا مع الخطة المجانية بدل ترك خيار صالح للخطط المدفوعة فقط.
+
+**Remaining**
+- يجب إعادة تحميل/مراجعة Blueprint في Render والتأكد من عدم ظهور validation errors أخرى قبل الإنشاء.
+
+**Next**
+- Refresh/Resync للـBlueprint في Render ثم Apply؛ بعد نجاح أول Deploy يتم فحص `/health` و`/api/build` ومطابقة SHA مع `main`.
