@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,9 +43,9 @@ jobs:
           CHANGED="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
           printf '%s\n' "$CHANGED"
 
-          if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|package\.json$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|Dockerfile$|package\.json$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
             if ! printf '%s\n' "$CHANGED" | grep -Fxq 'docs/WORKLOG.md'; then
-              echo '::error::Source/game architecture changed without an append-only docs/WORKLOG.md entry. Read AGENTS.md and document what changed, why, remaining risks, and the next exact step.'
+              echo '::error::Source/game/deployment architecture changed without an append-only docs/WORKLOG.md entry. Read AGENTS.md and document what changed, why, remaining risks, and the next exact step.'
               exit 1
             fi
           fi
@@ -62,7 +62,7 @@ jobs:
           cache: pnpm
 
       - name: Install
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         run: pnpm build
@@ -72,3 +72,32 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Build production container
+        run: docker build --tag qadiya-ci:${GITHUB_SHA} .
+
+      - name: Smoke frontend and backend from the same container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name qadiya-ci -p 2567:2567 -e PORT=2567 -e GIT_COMMIT_SHA="$GITHUB_SHA" qadiya-ci:${GITHUB_SHA}
+          trap 'docker rm -f qadiya-ci >/dev/null 2>&1 || true' EXIT
+
+          healthy=0
+          for _ in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:2567/health > /tmp/qadiya-health.json; then
+              healthy=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ "$healthy" != "1" ]]; then
+            docker logs qadiya-ci
+            exit 1
+          fi
+
+          cat /tmp/qadiya-health.json
+          grep -q "$GITHUB_SHA" /tmp/qadiya-health.json
+          curl --fail --silent http://127.0.0.1:2567/ > /dev/null
+          curl --fail --silent http://127.0.0.1:2567/api/build | grep -q "$GITHUB_SHA"

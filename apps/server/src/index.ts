@@ -1,18 +1,62 @@
 import cors from 'cors';
 import express from 'express';
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { resolve } from 'node:path';
 import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
+import { QADIYA_VERSION } from '@qadiya/shared';
 import { CourtRoom } from './rooms/CourtRoom.js';
 
 const port = Number(process.env.PORT ?? 2567);
 const app = express();
+const webDist = resolve(process.cwd(), 'apps/web/dist');
+const webIndex = resolve(webDist, 'index.html');
+const startedAt = new Date().toISOString();
+
+const buildInfo = Object.freeze({
+  version: QADIYA_VERSION,
+  commitSha: process.env.RAILWAY_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? 'local',
+  branch: process.env.RAILWAY_GIT_BRANCH ?? 'local',
+  deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? 'local',
+  repository: [process.env.RAILWAY_GIT_REPO_OWNER, process.env.RAILWAY_GIT_REPO_NAME].filter(Boolean).join('/') || 'local',
+  startedAt,
+});
+
 app.disable('x-powered-by');
 app.use(cors());
 app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'qadiya-game-server', version: '0.1.0' });
+  const frontendReady = existsSync(webIndex);
+  res.status(frontendReady ? 200 : 503).json({
+    ok: frontendReady,
+    service: 'qadiya',
+    frontendReady,
+    ...buildInfo,
+  });
+});
+
+app.get('/api/build', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json(buildInfo);
+});
+
+app.use(
+  express.static(webDist, {
+    index: false,
+    fallthrough: true,
+    maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+  }),
+);
+
+// SPA fallback. API/matchmaking requests are never masked by index.html.
+app.get(/.*/, (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/matchmake')) return next();
+  if (!existsSync(webIndex)) {
+    return res.status(503).json({ ok: false, error: 'FRONTEND_NOT_BUILT' });
+  }
+  return res.sendFile(webIndex);
 });
 
 const httpServer = createServer(app);
@@ -28,4 +72,4 @@ const gameServer = new Server({
 gameServer.define('court', CourtRoom);
 
 await gameServer.listen(port);
-console.log(`[QADIYA] game server listening on :${port}`);
+console.log(`[QADIYA] ${buildInfo.commitSha.slice(0, 12)} listening on :${port}`);

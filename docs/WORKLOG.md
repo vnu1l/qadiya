@@ -289,3 +289,27 @@
 
 **Next**
 - أول deterministic Case DNA→Blueprint composer، ثم ربطه بالـPrivate Briefs والـvariable-role preparation.
+
+---
+
+## 2026-08-24 — Atomic full-stack deployment contract
+
+**Changed**
+- اعتمد Deployment واحد للـFrontend والـBackend بدل خدمتين منفصلتين: Vite assets تُبنى داخل نفس Docker image الذي يشغّل Express/Colyseus.
+- `apps/server` أصبح يقدم `apps/web/dist` من نفس العملية/الدومين، ويعيد SPA fallback بدون إخفاء API/matchmaking routes.
+- `/health` لا يعيد 200 إلا إذا كان Frontend bundle موجودًا، ويعرض Git SHA وRailway deployment metadata.
+- أضيف `/api/build` غير مخزن مؤقتًا، والـGameShell يعرض أول 7 أحرف من SHA الذي يشغله السيرفر فعلًا.
+- أضيف Dockerfile production متعدد المراحل مع pnpm lockfile frozen.
+- GitHub CI أصبح يبني الـDocker image النهائي ويشغله ثم smoke-tests `/health`, `/api/build`, والصفحة الرئيسية من نفس الحاوية.
+- CI continuity gate أصبح يعتبر Dockerfile جزءًا من معمارية المصدر.
+- أضيف `docs/DEPLOYMENT.md` بعقد النشر وخطوات Railway GitHub Autodeploy + Wait for CI + `/health`.
+
+**Reason**
+- منع حالة Frontend أحدث من Backend أو العكس، وتوفير دليل قابل للتحقق على النسخة الحية بدل الاعتماد على ادعاء في المحادثة.
+
+**Remaining**
+- Railway نفسه لم يُربط بعد لأن هذه البيئة لا تملك Railway connector/token؛ لا يجوز الادعاء أن هناك URL حي قبل تنفيذ الربط الخارجي مرة واحدة.
+- بعد ربط Railway، يجب تفعيل Wait for CI وHealthcheck `/health` وتوليد Domain؛ بعدها كل Push ناجح إلى `main` يصبح Auto Deploy ذريًا.
+
+**Next**
+- إجراء الربط الخارجي مع Railway مرة واحدة، ثم العودة مباشرة إلى deterministic Case Composer دون تغيير معمارية النشر.
