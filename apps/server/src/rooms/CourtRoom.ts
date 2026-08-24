@@ -1,6 +1,7 @@
 import { Client, Room } from '@colyseus/core';
-import { isSessionKind, rulesForSession, type SessionKind } from '@qadiya/shared';
+import { isSessionKind, rulesForSession, type PrivatePlayerBrief, type SessionKind } from '@qadiya/shared';
 import { sanitizePrivateRulesPatch, sanitizeRolePreferences } from '../domain/lobbyInput';
+import { PrivateCaseVault } from '../domain/privateCaseVault';
 import {
   applyLobbyRulesState,
   applyRolePreferencesState,
@@ -19,6 +20,7 @@ function normalizedSessionKind(value: unknown): SessionKind {
 
 export class CourtRoom extends Room<CourtState> {
   maxClients = 12;
+  private readonly privateCaseVault = new PrivateCaseVault();
 
   onCreate(options: { sessionKind?: unknown } = {}) {
     const rules = rulesForSession(normalizedSessionKind(options.sessionKind));
@@ -50,6 +52,13 @@ export class CourtRoom extends Room<CourtState> {
       applyLobbyRulesState(this.state.rules, next);
     });
 
+    // The client can only request its own private brief. The brief never lives
+    // in the synchronized CourtState, so browser state inspection cannot reveal other roles' secrets.
+    this.onMessage('private:brief:request', (client) => {
+      const brief = this.privateCaseVault.getOwnBrief(client.sessionId);
+      if (brief) client.send('private:brief', brief);
+    });
+
     this.onMessage('speaker:request', (client) => {
       const player = this.state.players.get(client.sessionId);
       if (!player?.connected) return;
@@ -72,6 +81,12 @@ export class CourtRoom extends Room<CourtState> {
       if (!isJudge(actor) && !actorIsCurrentSpeaker) return;
       this.state.currentSpeakerId = '';
     });
+  }
+
+  /** Server-side integration point for the future Case Engine/Preparation service. */
+  setPrivateBriefForSession(sessionId: string, brief: PrivatePlayerBrief): void {
+    if (!this.state.players.has(sessionId)) throw new Error(`Unknown room session ${sessionId}.`);
+    this.privateCaseVault.setPlayerBrief(sessionId, brief);
   }
 
   onJoin(client: Client, options: { displayName?: unknown }) {
@@ -103,5 +118,9 @@ export class CourtRoom extends Room<CourtState> {
       );
       this.state.hostSessionId = nextHost?.[0] ?? '';
     }
+  }
+
+  onDispose() {
+    this.privateCaseVault.clear();
   }
 }

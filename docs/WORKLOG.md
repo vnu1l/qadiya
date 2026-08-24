@@ -146,3 +146,25 @@
 
 **Next**
 - Server-only role assignment transaction + Preparation/private knowledge boundaries.
+
+---
+
+## 2026-08-24 — Atomic core roles and private preparation vault
+
+**Changed**
+- أضيف `CoreRoleAllocationPlan` و`DefenseRepresentationPlan` لدعم الدفاع المشترك وSelf-representation دون جعل اللاعب يملك role strings متناقضة.
+- أضيف `applyCoreRolePlan` كمعاملة server-only: تتحقق من الاتصال، قبول الأدوار، عدد المتهمين، عدم تصادم القاضي/الادعاء/المتهمين، وتغطية كل متهم بالدفاع مرة واحدة قبل تعديل أي State.
+- 3-player Private self-representation أصبح مسارًا ممثلًا ومختبرًا؛ Casual يرفضه حاليًا.
+- أضيف `PrivateCaseVault` خارج Colyseus Schema لأسرار الشخصية والذاكرة والاستشارة المحمية.
+- العميل لا يستطيع طلب Brief لاعب آخر؛ `private:brief:request` يعيد فقط brief صاحب session.
+- أضيفت اختبارات للمعاملة الذرية، الدفاع المشترك، رفض الدور غير المقبول، وعزل الأسرار/consultation notes.
+
+**Reason**
+- منع نصف توزيع أدوار فاسد، ومنع تسريب Truth/Secrets إلى حالة الغرفة التي يستطيع العميل فحصها.
+
+**Remaining**
+- لا يوجد بعد coordinator يبني CoreRoleAllocationPlan من التصويت/الاختيارات تلقائيًا.
+- Vault غير persisted حتى الآن ومقصود أن يبقى Server-only؛ persistence ستأتي مع قاعدة البيانات.
+
+**Next**
+- RoleAllocationCoordinator ثم Preparation coordinator وretained memory notes.

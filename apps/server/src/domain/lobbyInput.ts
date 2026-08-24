@@ -56,7 +56,12 @@ export function sanitizePrivateRulesPatch(current: LobbyRules, input: unknown): 
     patch.defenseSelection = raw.defenseSelection as PrivateRulesPatch['defenseSelection'];
   }
 
-  for (const key of ['allowMultipleDefendants', 'allowCrossDefendantContradictions', 'allowSystemCharacters'] as const) {
+  for (const key of [
+    'allowMultipleDefendants',
+    'allowCrossDefendantContradictions',
+    'allowSystemCharacters',
+    'allowSelfRepresentation',
+  ] as const) {
     if (typeof raw[key] === 'boolean') patch[key] = raw[key];
   }
 

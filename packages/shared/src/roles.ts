@@ -64,3 +64,17 @@ export interface RoleAssignment {
   defendantGroupId?: string;
   replacedPlayerId?: string;
 }
+
+export interface DefenseRepresentationPlan {
+  id: string;
+  defendantPlayerIds: string[];
+  lawyerPlayerId?: string;
+  selfRepresented: boolean;
+}
+
+export interface CoreRoleAllocationPlan {
+  judgePlayerId: string;
+  prosecutionPlayerId: string;
+  defendantPlayerIds: string[];
+  defenseRepresentations: DefenseRepresentationPlan[];
+}

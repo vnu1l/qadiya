@@ -35,6 +35,7 @@ export interface LobbyRules {
   maxDefendants: number;
   allowCrossDefendantContradictions: boolean;
   allowSystemCharacters: boolean;
+  allowSelfRepresentation: boolean;
 }
 
 export type PrivateRulesPatch = Partial<Pick<
@@ -47,6 +48,7 @@ export type PrivateRulesPatch = Partial<Pick<
   | 'maxDefendants'
   | 'allowCrossDefendantContradictions'
   | 'allowSystemCharacters'
+  | 'allowSelfRepresentation'
 >>;
 
 export const DEFAULT_PRIVATE_RULES: Readonly<LobbyRules> = {
@@ -61,6 +63,7 @@ export const DEFAULT_PRIVATE_RULES: Readonly<LobbyRules> = {
   maxDefendants: 3,
   allowCrossDefendantContradictions: true,
   allowSystemCharacters: true,
+  allowSelfRepresentation: true,
 };
 
 export const DEFAULT_CASUAL_RULES: Readonly<LobbyRules> = {
@@ -75,6 +78,7 @@ export const DEFAULT_CASUAL_RULES: Readonly<LobbyRules> = {
   maxDefendants: 3,
   allowCrossDefendantContradictions: true,
   allowSystemCharacters: false,
+  allowSelfRepresentation: false,
 };
 
 export const DEFAULT_RANKED_RULES: Readonly<LobbyRules> = {
