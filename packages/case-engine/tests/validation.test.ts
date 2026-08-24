@@ -52,6 +52,7 @@ function validCase(): CaseBlueprint {
     roles: [
       {
         id: 'role-witness',
+        roleKind: 'witness',
         characterId: 'wit-1',
         required: true,
         replaceable: false,
@@ -82,49 +83,37 @@ describe('validateCaseBlueprint', () => {
   it('rejects evidence that points to a fact that does not exist', () => {
     const blueprint = validCase();
     blueprint.evidence[0]!.factIds = ['missing-fact'];
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'EVIDENCE_UNKNOWN_FACT')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'EVIDENCE_UNKNOWN_FACT')).toBe(true);
   });
 
   it('rejects knowledge with hearsay but no identified source person', () => {
     const blueprint = validCase();
     blueprint.knowledge[0]!.source = { kind: 'heard-from-person', precisionLimit: 'approximate' };
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'KNOWLEDGE_MISSING_SOURCE_PERSON')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_MISSING_SOURCE_PERSON')).toBe(true);
   });
 
   it('rejects a timeline event that ends before it starts', () => {
     const blueprint = validCase();
     blueprint.timeline[0]!.endMinute = 500;
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'INVALID_TIME_RANGE')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'INVALID_TIME_RANGE')).toBe(true);
   });
 
   it('rejects impossible travel between locations', () => {
     const blueprint = validCase();
     blueprint.timeline[1]!.startMinute = 547;
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'ACTOR_TRAVEL_IMPOSSIBLE')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'ACTOR_TRAVEL_IMPOSSIBLE')).toBe(true);
   });
 
   it('rejects overlapping presence in two different locations', () => {
     const blueprint = validCase();
     blueprint.timeline[1]!.startMinute = 544;
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'ACTOR_OVERLAPPING_LOCATIONS')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'ACTOR_OVERLAPPING_LOCATIONS')).toBe(true);
   });
 
   it('rejects exact knowledge when the source only supports approximate precision', () => {
     const blueprint = validCase();
     blueprint.knowledge[0]!.precision = 'exact';
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
   });
 
   it('allows exact knowledge when an exact-capable source supports it', () => {
@@ -135,8 +124,6 @@ describe('validateCaseBlueprint', () => {
       precisionLimit: 'exact',
     };
     blueprint.knowledge[0]!.precision = 'exact';
-
-    const issues = validateCaseBlueprint(blueprint);
-    expect(issues.some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(false);
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(false);
   });
 });

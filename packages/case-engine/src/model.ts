@@ -11,6 +11,15 @@ export type CaseComplexity = 1 | 2 | 3 | 4 | 5;
 export type KnowledgePrecision = 'exact' | 'narrow-range' | 'approximate' | 'vague';
 export type BeliefState = 'believes-true' | 'believes-false' | 'uncertain';
 
+export type CaseRoleKind =
+  | 'witness'
+  | 'investigator'
+  | 'expert'
+  | 'complainant'
+  | 'victim'
+  | 'secondary-suspect'
+  | 'case-related-person';
+
 export type KnowledgeSourceKind =
   | 'direct-observation'
   | 'self-memory'
@@ -66,10 +75,6 @@ export interface KnowledgeSource {
   sourceEntityId?: string;
   sourceTimelineEventId?: string;
   note?: string;
-  /**
-   * The finest precision this source can honestly support. A source may still
-   * be wrong; accuracy is modeled separately on KnowledgeItem.
-   */
   precisionLimit: KnowledgePrecision;
 }
 
@@ -78,9 +83,7 @@ export interface KnowledgeItem {
   holderCharacterId: string;
   factId: string;
   source: KnowledgeSource;
-  /** Objective correspondence to the ground truth, from 0 to 1. */
   accuracy: number;
-  /** How sure the character feels, from 0 to 1. This is deliberately distinct from accuracy. */
   confidence: number;
   precision: KnowledgePrecision;
   belief: BeliefState;
@@ -100,9 +103,7 @@ export interface EvidenceDefinition {
   title: string;
   factIds: string[];
   provenance: EvidenceProvenance;
-  /** Technical trustworthiness of the item itself, not the legal conclusion. */
   reliability: number;
-  /** How open the evidence is to competing interpretations, from 0 to 1. */
   ambiguity: number;
   discoverableByRoleIds: string[];
 }
@@ -117,6 +118,7 @@ export interface RoleEngagement {
 
 export interface RoleDefinition {
   id: string;
+  roleKind: CaseRoleKind;
   characterId: string;
   required: boolean;
   replaceable: boolean;

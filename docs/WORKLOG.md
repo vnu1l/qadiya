@@ -101,3 +101,25 @@
 
 **Next**
 - Case DNA + variable-role scoring/adaptation، ثم typed server lobby state.
+
+---
+
+## 2026-08-24 — Case DNA and variable-role adaptation
+
+**Changed**
+- أضيف `CaseDNA` يحدد family/mode/truth pattern/evidence pattern/witness pattern/modifiers/defendant range/variable-role budget قبل بناء التفاصيل.
+- أضيف validator يمنع DNA متناقضًا، مثل single-defendant يسمح بمتهمين أو cross-defendant modifier بدون تعدد متهمين.
+- `RoleDefinition` أصبح يملك `roleKind` صريحًا.
+- أضيف `humanRoleValue` و`adaptVariableRoles`: المقاعد البشرية تذهب للأدوار الأعلى قيمة تفاعلية، والبقية تتحول إلى System Character أو Document فقط إذا كان ذلك مسموحًا وآمنًا.
+- الدور Critical لا يتحول بصمت إلى مستند.
+- أضيفت اختبارات تثبت أن جلسة 3 لاعبين يمكن أن تشغّل أدوار القضية كـSystem Characters بدل كسر القضية.
+
+**Reason**
+- العدد يجب أن يغيّر طريقة تمثيل أدوار القضية لا منطق الحقيقة، وأن يكون 3-player mode مسارًا أصليًا من نفس Case Engine.
+
+**Remaining**
+- Case DNA لا يولد Blueprint بعد؛ composition/generator يأتي بعد اكتمال selection/validation primitives.
+- role value weights أولية ويجب معايرتها من analytics لاحقًا، لا hardcode على أنها حقيقة نهائية.
+
+**Next**
+- Typed Colyseus lobby state ورسائل آمنة للـpreferences/settings، ثم Preparation/privilege contracts.
