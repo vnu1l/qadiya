@@ -211,3 +211,29 @@
 
 **Next**
 - ربط coordinator بالـCourtRoom ورسائل التصويت/اختيار المحامي، ثم Preparation coordinator.
+
+---
+
+## 2026-08-24 — Authoritative room integration for role allocation
+
+**Changed**
+- نقل public role-allocation snapshot contracts إلى `packages/shared` حتى يرى العميل فقط الحالة العامة الضرورية، بدون weights أو history أو أسرار.
+- أضيف `RoleAllocationState` إلى Colyseus state لعرض المتهمين، مرشحي القاضي، القاضي المحسوم، عدد مقاعد الدفاع، وطلبات المحامي المعلقة.
+- `CourtRoom` أصبح يملك Coordinator server-only ويقبل فقط أفعالًا محددة: تصويت القاضي، طلب محامٍ، قبول/رفض، self-representation، وPrivate host selections.
+- بداية التوزيع نفسها بقيت server-owned عبر `beginCoreRoleAllocation`; لا يوجد client message يمرر `defendantCount` أو `requiredDefenseLawyerCount`.
+- إغلاق تصويت Casual/Ranked وcourt-appointed timeout يملكان hooks سيرفر مستقلة؛ Private host فقط يستطيع طلب الإغلاق/fallback يدويًا.
+- عند اكتمال الـCoordinator تمر الخطة مجددًا عبر `applyCoreRolePlan` الذرية قبل تطبيق أي دور.
+- إذا خرج لاعب أثناء role allocation تلغى الدفعة بأمان وتعود الغرفة للـLobby مع Ready reset بدل الاستمرار على snapshot قديم.
+- role preferences أصبحت مجمدة بعد بدء التوزيع لمنع تغيير الأهلية أثناء التصويت/الاختيار.
+- أضيف اختبار لإسقاط public allocation snapshot وإعادة ضبطه.
+
+**Reason**
+- جعل التفاعل حقيقيًا على الشبكة دون إعطاء العميل سلطة على منطق التوزيع أو السماح بتسابق بين تغييرات preferences والاختيارات الجارية.
+
+**Remaining**
+- late join أثناء role allocation لم يُقفل بعد على مستوى matchmaking/room lock؛ يجب ربط lock/unlock مع pre-game lifecycle.
+- لا توجد timers فعلية للتصويت/عدم رد المحامي بعد؛ توجد hooks/fallback server-side فقط.
+- role history ما زال placeholder server-side فارغًا حتى تأتي persistence.
+
+**Next**
+- Preparation coordinator + retained notes/consultation lifecycle، ثم أول deterministic DNA→Blueprint composer.

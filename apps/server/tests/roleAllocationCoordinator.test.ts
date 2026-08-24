@@ -70,7 +70,7 @@ describe('RoleAllocationCoordinator', () => {
     const completed = coordinator.finalizeDefenseChoices();
 
     expect(completed.stage).toBe('complete');
-    expect(completed.completedPlan).toEqual({
+    expect(coordinator.getCompletedPlan()).toEqual({
       judgePlayerId: 'p2',
       prosecutionPlayerId: 'p4',
       defendantPlayerIds: ['p1'],
@@ -95,8 +95,8 @@ describe('RoleAllocationCoordinator', () => {
     coordinator.proposeDefenseLawyer('p1', 'p3');
     coordinator.respondDefenseRequest('p3', 'p1', false);
 
-    const completed = coordinator.courtAppointUnresolvedDefense();
-    const lawyer = completed.completedPlan?.defenseRepresentations[0]?.lawyerPlayerId;
+    coordinator.courtAppointUnresolvedDefense();
+    const lawyer = coordinator.getCompletedPlan()?.defenseRepresentations[0]?.lawyerPlayerId;
     expect(lawyer).toBeDefined();
     expect(lawyer).not.toBe('p3');
   });
@@ -111,20 +111,17 @@ describe('RoleAllocationCoordinator', () => {
 
     // A zero-vote close is an explicit recovery route: fairness weights break the tie.
     const completed = coordinator.closeJudgeVote();
+    const plan = coordinator.getCompletedPlan();
     expect(completed.stage).toBe('complete');
-    expect(completed.completedPlan?.defendantPlayerIds).toEqual(['p1']);
-    expect(completed.completedPlan?.defenseRepresentations).toEqual([
+    expect(plan?.defendantPlayerIds).toEqual(['p1']);
+    expect(plan?.defenseRepresentations).toEqual([
       {
         id: 'self:p1',
         defendantPlayerIds: ['p1'],
         selfRepresented: true,
       },
     ]);
-    expect(new Set([
-      completed.completedPlan?.judgePlayerId,
-      completed.completedPlan?.prosecutionPlayerId,
-      completed.completedPlan?.defendantPlayerIds[0],
-    ]).size).toBe(3);
+    expect(new Set([plan?.judgePlayerId, plan?.prosecutionPlayerId, plan?.defendantPlayerIds[0]]).size).toBe(3);
   });
 
   it('requires the selected number of distinct human defense seats for a multi-defendant case', () => {
@@ -143,7 +140,7 @@ describe('RoleAllocationCoordinator', () => {
     coordinator.respondDefenseRequest('p4', secondDefendant!, true);
 
     expect(() => coordinator.finalizeDefenseChoices()).toThrowError(
-      expect.objectContaining<RoleAllocationError>({ code: 'DEFENSE_SEAT_COUNT_MISMATCH' }),
+      expect.objectContaining({ code: 'DEFENSE_SEAT_COUNT_MISMATCH' }),
     );
   });
 
@@ -154,7 +151,7 @@ describe('RoleAllocationCoordinator', () => {
     const candidate = started.judgeCandidateIds[0]!;
 
     expect(() => coordinator.castJudgeVote(candidate, candidate)).toThrowError(
-      expect.objectContaining<RoleAllocationError>({ code: 'JUDGE_SELF_VOTE' }),
+      expect.objectContaining({ code: 'JUDGE_SELF_VOTE' }),
     );
   });
 
@@ -176,7 +173,22 @@ describe('RoleAllocationCoordinator', () => {
     coordinator.respondDefenseRequest('p3', 'p1', true);
 
     expect(() => coordinator.finalizeDefenseChoices()).toThrowError(
-      expect.objectContaining<RoleAllocationError>({ code: 'NO_ROLE_CANDIDATE' }),
+      expect.objectContaining({ code: 'NO_ROLE_CANDIDATE' }),
     );
+  });
+
+  it('uses a typed allocation error with a stable code', () => {
+    const players = [player('p1'), player('p2'), player('p3'), player('p4'), player('p5'), player('p6')];
+    const coordinator = new RoleAllocationCoordinator(players, casualRules(), 1, 1, alwaysFirst);
+    coordinator.start();
+    const candidate = coordinator.getSnapshot().judgeCandidateIds[0]!;
+
+    try {
+      coordinator.castJudgeVote(candidate, candidate);
+      throw new Error('Expected self vote to fail.');
+    } catch (error) {
+      expect(error).toBeInstanceOf(RoleAllocationError);
+      expect((error as RoleAllocationError).code).toBe('JUDGE_SELF_VOTE');
+    }
   });
 });

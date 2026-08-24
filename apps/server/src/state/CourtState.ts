@@ -9,6 +9,8 @@ import type {
   JudgeSelectionMethod,
   LobbyRules,
   PlayerRole,
+  RoleAllocationPublicSnapshot,
+  RoleAllocationStage,
   RolePreference,
   SessionKind,
 } from '@qadiya/shared';
@@ -50,13 +52,34 @@ export class DefenseRepresentationState extends Schema {
   @type(['string']) defendantSessionIds = new ArraySchema<string>();
 }
 
+export class PendingDefenseRequestState extends Schema {
+  @type('string') defendantSessionId = '';
+  @type('string') lawyerSessionId = '';
+}
+
+export class RoleAllocationState extends Schema {
+  @type('string') stage: RoleAllocationStage = 'not-started';
+  @type(['string']) defendantSessionIds = new ArraySchema<string>();
+  @type(['string']) judgeCandidateSessionIds = new ArraySchema<string>();
+  @type('string') judgeSessionId = '';
+  @type('string') prosecutionSessionId = '';
+  @type('number') requiredDefenseLawyerCount = 0;
+  @type({ map: PendingDefenseRequestState }) pendingDefenseRequests = new MapSchema<PendingDefenseRequestState>();
+}
+
 export class CourtState extends Schema {
   @type('string') phase: CourtPhase = 'lobby';
   @type('string') currentSpeakerId = '';
   @type('string') hostSessionId = '';
   @type(LobbyRulesState) rules = new LobbyRulesState();
+  @type(RoleAllocationState) roleAllocation = new RoleAllocationState();
   @type({ map: PlayerState }) players = new MapSchema<PlayerState>();
   @type({ map: DefenseRepresentationState }) defenseRepresentations = new MapSchema<DefenseRepresentationState>();
+}
+
+function replaceStringArray(target: ArraySchema<string>, values: readonly string[]): void {
+  target.splice(0, target.length);
+  target.push(...values);
 }
 
 export function applyLobbyRulesState(target: LobbyRulesState, rules: LobbyRules): void {
@@ -117,4 +140,34 @@ export function applyDefenseRepresentationState(
     state.defendantSessionIds.push(...representation.defendantPlayerIds);
     target.set(representation.id, state);
   }
+}
+
+export function applyRoleAllocationSnapshot(
+  target: RoleAllocationState,
+  snapshot: RoleAllocationPublicSnapshot,
+): void {
+  target.stage = snapshot.stage;
+  replaceStringArray(target.defendantSessionIds, snapshot.defendantPlayerIds);
+  replaceStringArray(target.judgeCandidateSessionIds, snapshot.judgeCandidateIds);
+  target.judgeSessionId = snapshot.judgePlayerId ?? '';
+  target.prosecutionSessionId = snapshot.prosecutionPlayerId ?? '';
+  target.requiredDefenseLawyerCount = snapshot.requiredDefenseLawyerCount;
+  target.pendingDefenseRequests.clear();
+
+  for (const request of snapshot.pendingDefenseRequests) {
+    const state = new PendingDefenseRequestState();
+    state.defendantSessionId = request.defendantPlayerId;
+    state.lawyerSessionId = request.lawyerPlayerId;
+    target.pendingDefenseRequests.set(request.defendantPlayerId, state);
+  }
+}
+
+export function resetRoleAllocationState(target: RoleAllocationState): void {
+  target.stage = 'not-started';
+  target.defendantSessionIds.splice(0, target.defendantSessionIds.length);
+  target.judgeCandidateSessionIds.splice(0, target.judgeCandidateSessionIds.length);
+  target.judgeSessionId = '';
+  target.prosecutionSessionId = '';
+  target.requiredDefenseLawyerCount = 0;
+  target.pendingDefenseRequests.clear();
 }

@@ -78,3 +78,28 @@ export interface CoreRoleAllocationPlan {
   defendantPlayerIds: string[];
   defenseRepresentations: DefenseRepresentationPlan[];
 }
+
+export type RoleAllocationStage =
+  | 'not-started'
+  | 'awaiting-private-defendants'
+  | 'awaiting-judge-vote'
+  | 'awaiting-private-judge'
+  | 'awaiting-defense-choice'
+  | 'awaiting-private-defense'
+  | 'complete';
+
+export interface PendingDefenseRequest {
+  defendantPlayerId: string;
+  lawyerPlayerId: string;
+}
+
+/** Public-only projection. It intentionally contains no history weights or private case knowledge. */
+export interface RoleAllocationPublicSnapshot {
+  stage: RoleAllocationStage;
+  defendantPlayerIds: string[];
+  judgeCandidateIds: string[];
+  judgePlayerId?: string;
+  prosecutionPlayerId?: string;
+  requiredDefenseLawyerCount: number;
+  pendingDefenseRequests: PendingDefenseRequest[];
+}

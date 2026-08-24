@@ -3,6 +3,8 @@ import type {
   DefenseRepresentationPlan,
   LobbyPlayerProfile,
   LobbyRules,
+  RoleAllocationPublicSnapshot,
+  RoleAllocationStage,
 } from '@qadiya/shared';
 import {
   rankCourtAppointedDefense,
@@ -11,15 +13,6 @@ import {
   selectWeightedDefendants,
   type RandomSource,
 } from './roleAllocator';
-
-export type RoleAllocationStage =
-  | 'not-started'
-  | 'awaiting-private-defendants'
-  | 'awaiting-judge-vote'
-  | 'awaiting-private-judge'
-  | 'awaiting-defense-choice'
-  | 'awaiting-private-defense'
-  | 'complete';
 
 export class RoleAllocationError extends Error {
   constructor(
@@ -42,17 +35,6 @@ interface SelfDefenseChoice {
 }
 
 type DefenseChoice = DefenseLawyerChoice | SelfDefenseChoice;
-
-export interface RoleAllocationSnapshot {
-  stage: RoleAllocationStage;
-  defendantPlayerIds: string[];
-  judgeCandidateIds: string[];
-  judgePlayerId?: string;
-  prosecutionPlayerId?: string;
-  requiredDefenseLawyerCount: number;
-  pendingDefenseRequests: Array<{ defendantPlayerId: string; lawyerPlayerId: string }>;
-  completedPlan?: CoreRoleAllocationPlan;
-}
 
 function acceptedRole(player: LobbyPlayerProfile, role: string): boolean {
   return player.rolePreferences.some((preference) => preference.role === role && preference.accepted);
@@ -113,7 +95,7 @@ export class RoleAllocationCoordinator {
     this.validateConfiguration();
   }
 
-  getSnapshot(): RoleAllocationSnapshot {
+  getSnapshot(): RoleAllocationPublicSnapshot {
     return {
       stage: this.stage,
       defendantPlayerIds: [...this.defendantPlayerIds],
@@ -127,20 +109,22 @@ export class RoleAllocationCoordinator {
           defendantPlayerId,
           lawyerPlayerId: choice.lawyerPlayerId,
         })),
-      completedPlan: this.completedPlan
-        ? {
-            ...this.completedPlan,
-            defendantPlayerIds: [...this.completedPlan.defendantPlayerIds],
-            defenseRepresentations: this.completedPlan.defenseRepresentations.map((representation) => ({
-              ...representation,
-              defendantPlayerIds: [...representation.defendantPlayerIds],
-            })),
-          }
-        : undefined,
     };
   }
 
-  start(): RoleAllocationSnapshot {
+  getCompletedPlan(): CoreRoleAllocationPlan | null {
+    if (!this.completedPlan) return null;
+    return {
+      ...this.completedPlan,
+      defendantPlayerIds: [...this.completedPlan.defendantPlayerIds],
+      defenseRepresentations: this.completedPlan.defenseRepresentations.map((representation) => ({
+        ...representation,
+        defendantPlayerIds: [...representation.defendantPlayerIds],
+      })),
+    };
+  }
+
+  start(): RoleAllocationPublicSnapshot {
     if (this.stage !== 'not-started') {
       throw new RoleAllocationError('ALLOCATION_ALREADY_STARTED', 'Role allocation has already started.');
     }
@@ -161,7 +145,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  setPrivateDefendants(playerIds: readonly string[]): RoleAllocationSnapshot {
+  setPrivateDefendants(playerIds: readonly string[]): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-private-defendants');
     this.requirePrivateRoom('PRIVATE_DEFENDANT_SELECTION_OUTSIDE_PRIVATE');
 
@@ -176,7 +160,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  castJudgeVote(voterPlayerId: string, candidatePlayerId: string): RoleAllocationSnapshot {
+  castJudgeVote(voterPlayerId: string, candidatePlayerId: string): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-judge-vote');
     const voter = this.requireActivePlayer(voterPlayerId);
     if (!this.judgeCandidateIds.includes(candidatePlayerId)) {
@@ -190,7 +174,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  closeJudgeVote(): RoleAllocationSnapshot {
+  closeJudgeVote(): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-judge-vote');
     const candidates = this.judgeCandidateIds.map((id) => this.requireActivePlayer(id));
     const tallies = new Map<string, number>();
@@ -210,7 +194,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  setPrivateJudge(playerId: string): RoleAllocationSnapshot {
+  setPrivateJudge(playerId: string): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-private-judge');
     this.requirePrivateRoom('PRIVATE_JUDGE_SELECTION_OUTSIDE_PRIVATE');
     this.requireEligiblePlayer(playerId, 'judge', new Set(this.defendantPlayerIds));
@@ -219,7 +203,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  proposeDefenseLawyer(defendantPlayerId: string, lawyerPlayerId: string): RoleAllocationSnapshot {
+  proposeDefenseLawyer(defendantPlayerId: string, lawyerPlayerId: string): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-defense-choice');
     this.requireDefendant(defendantPlayerId);
     this.requireEligiblePlayer(lawyerPlayerId, 'defense', this.coreReservedIds());
@@ -236,7 +220,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  respondDefenseRequest(lawyerPlayerId: string, defendantPlayerId: string, accepted: boolean): RoleAllocationSnapshot {
+  respondDefenseRequest(lawyerPlayerId: string, defendantPlayerId: string, accepted: boolean): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-defense-choice');
     const choice = this.defenseChoices.get(defendantPlayerId);
     if (choice?.kind !== 'lawyer' || choice.lawyerPlayerId !== lawyerPlayerId) {
@@ -256,7 +240,7 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  chooseSelfRepresentation(defendantPlayerId: string): RoleAllocationSnapshot {
+  chooseSelfRepresentation(defendantPlayerId: string): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-defense-choice');
     this.requireDefendant(defendantPlayerId);
     if (!this.rules.allowSelfRepresentation) {
@@ -267,14 +251,14 @@ export class RoleAllocationCoordinator {
     return this.getSnapshot();
   }
 
-  finalizeDefenseChoices(): RoleAllocationSnapshot {
+  finalizeDefenseChoices(): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-defense-choice');
     this.defenseRepresentations = this.buildRepresentationsFromChoices();
     this.assignProsecutionAndComplete();
     return this.getSnapshot();
   }
 
-  courtAppointUnresolvedDefense(): RoleAllocationSnapshot {
+  courtAppointUnresolvedDefense(): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-defense-choice');
 
     for (const [defendantId, choice] of [...this.defenseChoices.entries()]) {
@@ -309,8 +293,7 @@ export class RoleAllocationCoordinator {
     }
 
     const allLawyers = [...acceptedLawyers, ...newLawyers];
-    for (let index = 0; index < unresolved.length; index += 1) {
-      const defendantId = unresolved[index]!;
+    for (const defendantId of unresolved) {
       const rejected = this.rejectedDefenseByDefendant.get(defendantId) ?? new Set<string>();
       const preferred = allLawyers.find((lawyerId) => !rejected.has(lawyerId));
       if (!preferred) {
@@ -322,7 +305,7 @@ export class RoleAllocationCoordinator {
     return this.finalizeDefenseChoices();
   }
 
-  setPrivateDefenseRepresentations(representations: readonly DefenseRepresentationPlan[]): RoleAllocationSnapshot {
+  setPrivateDefenseRepresentations(representations: readonly DefenseRepresentationPlan[]): RoleAllocationPublicSnapshot {
     this.requireStage('awaiting-private-defense');
     this.requirePrivateRoom('PRIVATE_DEFENSE_SELECTION_OUTSIDE_PRIVATE');
     this.validateRepresentations(representations);
