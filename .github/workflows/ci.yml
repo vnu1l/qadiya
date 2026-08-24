@@ -13,6 +13,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce project memory update
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            BASE_SHA="$PR_BASE_SHA"
+          else
+            BASE_SHA="$PUSH_BEFORE"
+          fi
+
+          if [[ -z "${BASE_SHA:-}" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            BASE_SHA="$(git rev-parse HEAD^ 2>/dev/null || true)"
+          fi
+
+          if [[ -z "${BASE_SHA:-}" ]]; then
+            echo "No comparison base available; skipping continuity gate for initial commit."
+            exit 0
+          fi
+
+          CHANGED="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")"
+          printf '%s\n' "$CHANGED"
+
+          if printf '%s\n' "$CHANGED" | grep -Eq '^(apps/|packages/|package\.json$|pnpm-workspace\.yaml$|tsconfig\.base\.json$)'; then
+            if ! printf '%s\n' "$CHANGED" | grep -Fxq 'docs/PROJECT_MEMORY.md'; then
+              echo '::error::Source/game architecture changed without updating docs/PROJECT_MEMORY.md. Read AGENTS.md and update the canonical project memory in the same change.'
+              exit 1
+            fi
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
