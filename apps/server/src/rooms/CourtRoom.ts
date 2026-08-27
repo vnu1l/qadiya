@@ -11,11 +11,11 @@ import {
   type RoleAllocationPublicSnapshot,
   type SessionKind,
 } from '@qadiya/shared';
-import { sanitizePrivateRulesPatch, sanitizeRolePreferences } from '../domain/lobbyInput';
-import { PreparationCoordinator, PreparationError } from '../domain/preparationCoordinator';
-import { PrivateCaseVault } from '../domain/privateCaseVault';
-import { RoleAllocationCoordinator, RoleAllocationError } from '../domain/roleAllocationCoordinator';
-import { applyCoreRolePlan } from '../domain/roleTransaction';
+import { sanitizePrivateRulesPatch, sanitizeRolePreferences } from '../domain/lobbyInput.js';
+import { PreparationCoordinator, PreparationError } from '../domain/preparationCoordinator.js';
+import { PrivateCaseVault } from '../domain/privateCaseVault.js';
+import { RoleAllocationCoordinator, RoleAllocationError } from '../domain/roleAllocationCoordinator.js';
+import { applyCoreRolePlan } from '../domain/roleTransaction.js';
 import {
   applyLobbyRulesState,
   applyPreparationSnapshot,
@@ -26,7 +26,7 @@ import {
   PlayerState,
   resetPreparationState,
   resetRoleAllocationState,
-} from '../state/CourtState';
+} from '../state/CourtState.js';
 
 function isJudge(player: PlayerState | undefined): boolean {
   return player?.role === 'judge';

@@ -6,7 +6,7 @@ import type {
   PreparationReadiness,
   PrivilegedConsultation,
 } from '@qadiya/shared';
-import { PrivateCaseVault, type RetainedNotesUpdateResult } from './privateCaseVault';
+import { PrivateCaseVault, type RetainedNotesUpdateResult } from './privateCaseVault.js';
 
 export class PreparationError extends Error {
   constructor(

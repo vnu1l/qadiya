@@ -4,7 +4,7 @@ import type {
   RoleEngagement,
   TimelineEvent,
   TravelLink,
-} from './model';
+} from './model.js';
 
 export type ValidationSeverity = 'error' | 'warning';
 

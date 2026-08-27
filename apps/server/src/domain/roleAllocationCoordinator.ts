@@ -12,7 +12,7 @@ import {
   roleOpportunityWeight,
   selectWeightedDefendants,
   type RandomSource,
-} from './roleAllocator';
+} from './roleAllocator.js';
 
 export class RoleAllocationError extends Error {
   constructor(

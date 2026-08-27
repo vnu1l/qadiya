@@ -1,5 +1,5 @@
-import type { CharacterBrief } from './characters';
-import type { PlayerRole } from './roles';
+import type { CharacterBrief } from './characters.js';
+import type { PlayerRole } from './roles.js';
 
 export const RETAINED_NOTE_ABSOLUTE_MAX = 5;
 export const RETAINED_NOTE_MAX_LENGTH = 96;

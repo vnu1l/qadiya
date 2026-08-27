@@ -399,3 +399,27 @@
 
 **Next**
 - انتظار CI لهذا commit، أخذ lockfile من `automation/pnpm-lock`، عمل cleanup commit نهائي، ثم إعادة جميع فحوص CI والنشر إلى Render.
+
+
+---
+
+## 2026-08-27 — Canonical lock committed + full ESM import correction
+
+**Changed**
+- نجح CI في توليد `pnpm-lock.yaml` بعد تثبيت Colyseus، وتم أخذ نفس lockfile الناتج من فرع `automation/pnpm-lock` وتثبيته في main.
+- حُذفت صلاحية `contents: write` وخطوة bootstrap المؤقتة من CI، وعاد install إلى `--frozen-lockfile`.
+- عاد Docker build/runtime كلاهما إلى استخدام lockfile المثبت و`--frozen-lockfile`.
+- حُذف endpoint المؤقت `/api/build/dependency-lock` فور انتهاء الغرض منه.
+- كشف أول TypeScript build أخطاء ESM حقيقية كانت مخفية: relative imports/exports داخل `packages/shared`, `packages/case-engine` وserver source بلا امتداد صالح لـNodeNext. تمت مراجعتها وتصحيحها كلها إلى `.js` حيث يلزم.
+- أضيف allowlist صريح لـpnpm build scripts الضرورية `esbuild` و`msgpackr-extract`.
+
+**Reason**
+- الهدف أن يكون الناتج ESM قابلًا للتشغيل في Node مباشرة، لا أن ينجح bundler فقط.
+- أي صلاحية أو endpoint Bootstrap مؤقت يجب أن يختفي بمجرد انتهاء دوره.
+- تثبيت lockfile يجعل GitHub وDocker وRender يستخدمون dependency graph واحدة.
+
+**Remaining**
+- إعادة CI كاملًا والتعامل مع أي خطأ جديد يظهر في build/typecheck/tests/Docker/smoke قبل السماح لـRender بالنشر.
+
+**Next**
+- تشغيل كامل pipeline؛ لا يُقبل Deploy إلا إذا أصبح أخضر بالكامل.

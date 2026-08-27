@@ -1,4 +1,4 @@
-import type { RolePreference, RoleHistorySummary } from './roles';
+import type { RolePreference, RoleHistorySummary } from './roles.js';
 
 export type SessionKind = 'casual' | 'ranked' | 'private';
 export type CaseCommitment = 'small' | 'standard' | 'large' | 'long' | 'any';

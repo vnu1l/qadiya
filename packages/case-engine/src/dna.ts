@@ -1,4 +1,4 @@
-import type { CaseComplexity, CaseMode, EvidenceKind } from './model';
+import type { CaseComplexity, CaseMode, EvidenceKind } from './model.js';
 
 export type CaseFamily =
   | 'identity'

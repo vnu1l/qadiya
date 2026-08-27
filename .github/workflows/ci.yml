@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
 
 jobs:
   build:
@@ -63,19 +61,6 @@ jobs:
         with:
           node-version: 24
 
-      - name: Bootstrap dependency lockfile
-        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          pnpm install --lockfile-only
-          git config user.name "qadiya-ci"
-          git config user.email "qadiya-ci@users.noreply.github.com"
-          git switch -C automation/pnpm-lock
-          git add pnpm-lock.yaml
-          git commit -m "chore: generate pnpm dependency lock"
-          git push --force origin HEAD:automation/pnpm-lock
-
       - name: Install
         run: pnpm install --frozen-lockfile
 
@@ -116,4 +101,3 @@ jobs:
           grep -q "$GITHUB_SHA" /tmp/qadiya-health.json
           curl --fail --silent http://127.0.0.1:2567/ > /dev/null
           curl --fail --silent http://127.0.0.1:2567/api/build | grep -q "$GITHUB_SHA"
-          curl --fail --silent http://127.0.0.1:2567/api/build/dependency-lock | grep -q '^lockfileVersion:'

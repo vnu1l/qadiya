@@ -1,7 +1,7 @@
 export const QADIYA_VERSION = '0.1.0';
 
-export * from './characters';
-export * from './court';
-export * from './lobby';
-export * from './preparation';
-export * from './roles';
+export * from './characters.js';
+export * from './court.js';
+export * from './lobby.js';
+export * from './preparation.js';
+export * from './roles.js';

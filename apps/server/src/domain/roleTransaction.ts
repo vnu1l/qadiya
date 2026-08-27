@@ -1,5 +1,5 @@
 import type { AssignableRole, CoreRoleAllocationPlan, LobbyRules } from '@qadiya/shared';
-import { applyDefenseRepresentationState, type CourtState, type PlayerState } from '../state/CourtState';
+import { applyDefenseRepresentationState, type CourtState, type PlayerState } from '../state/CourtState.js';
 
 export interface RoleTransactionIssue {
   code: string;

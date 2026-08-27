@@ -32,16 +32,14 @@ Last updated: 2026-08-27
 
 ## Current verified blocker
 
-GitHub Actions currently fails during dependency installation before build because the previous floating `@colyseus/core: ^0.16.0` resolved to a newly published 0.16.x package containing an invalid npm workspace dependency. The current repair pins a known-good 0.16 set and bootstraps a canonical lockfile. No deploy is considered valid until CI passes.
+The dependency-install blocker is fixed and a canonical `pnpm-lock.yaml` has been generated. The first real TypeScript build exposed ESM relative-import issues; those are corrected across shared/case-engine/server and the project is awaiting a complete clean CI pass. No deploy is considered valid until that pipeline passes.
 
 ## Next exact implementation steps
 
-1. Run CI with pinned Colyseus versions and generate `pnpm-lock.yaml` into the temporary automation branch.
-2. Commit that exact lockfile to main; remove temporary write permission/bootstrap endpoint and restore frozen installs in CI and Docker.
-3. Require green build + typecheck + all unit tests + production Docker smoke test.
-4. Let Render deploy only the checks-passing main commit.
-5. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
-6. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
+1. Require green build + typecheck + all unit tests + production Docker smoke test on the canonical lockfile.
+2. Let Render deploy only the checks-passing main commit.
+3. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
+4. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
 
 ## Known feature limitations (not build errors)
 

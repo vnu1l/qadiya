@@ -1,7 +1,7 @@
 import type { LobbyRules } from '@qadiya/shared';
-import type { CaseDNA } from './dna';
-import { validateCaseDNA } from './dna';
-import type { CaseMode } from './model';
+import type { CaseDNA } from './dna.js';
+import { validateCaseDNA } from './dna.js';
+import type { CaseMode } from './model.js';
 
 export type RandomSource = () => number;
 

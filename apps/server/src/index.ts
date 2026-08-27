@@ -12,7 +12,6 @@ const port = Number(process.env.PORT ?? 2567);
 const app = express();
 const webDist = resolve(process.cwd(), 'apps/web/dist');
 const webIndex = resolve(webDist, 'index.html');
-const dependencyLock = resolve(process.cwd(), 'pnpm-lock.yaml');
 const startedAt = new Date().toISOString();
 
 const railwayRepository = [process.env.RAILWAY_GIT_REPO_OWNER, process.env.RAILWAY_GIT_REPO_NAME]
@@ -62,17 +61,6 @@ app.get('/health', (_req, res) => {
 app.get('/api/build', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json(buildInfo);
-});
-
-// Temporary bootstrap endpoint. pnpm-lock.yaml contains dependency metadata only,
-// not secrets. Remove this route immediately after the generated lockfile is
-// committed back to the repository.
-app.get('/api/build/dependency-lock', (_req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
-  if (!existsSync(dependencyLock)) {
-    return res.status(404).json({ ok: false, error: 'DEPENDENCY_LOCK_NOT_AVAILABLE' });
-  }
-  return res.type('text/yaml').sendFile(dependencyLock);
 });
 
 app.use(

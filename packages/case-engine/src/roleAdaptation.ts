@@ -1,4 +1,4 @@
-import type { RoleDefinition, RoleEngagement } from './model';
+import type { RoleDefinition, RoleEngagement } from './model.js';
 
 export interface RoleAdaptationOptions {
   humanSlots: number;
