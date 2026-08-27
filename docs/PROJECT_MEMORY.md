@@ -534,3 +534,12 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - جميع symbolic ids في template تتحول إلى runtime ids namespaced تحت case id لمنع collisions.
 - لا يعيد composer أي Blueprint يحتوي validation errors؛ يمر دائمًا عبر validateCaseTemplate ثم validateCaseBlueprint.
 - Composition لا يربط القضية بالغرفة ولا يرسل الحقيقة لأي client؛ هذا domain-only output حتى تكتمل private brief/adaptation steps.
+
+
+## 34. Catalog Composition Facade
+
+- بعد اختيار DNA وعدد المتهمين، Case Engine لا يختار أي Template غير validated ومتوافق مع الاثنين.
+- compatibleCaseTemplates يرتب المرشحين بالـid/revision قبل أي seeded selection، لذلك ترتيب Array من caller لا يغير النتيجة.
+- composeCaseFromCatalog يختار Template بطريقة حتمية من seed ثم يستدعي composeCaseTemplate؛ لا يوجد Math.random ولا client authority في هذا القرار.
+- Template غير صالح يُستبعد بالكامل ولا يصل إلى Composer.
+- عدم وجود Template صالح ينتج typed error واضح ولا fallback عشوائي أو قضية ناقصة.

@@ -538,3 +538,25 @@
 
 **Next**
 - تشغيل CI الكامل لهذه الخطوة فقط. إذا كان أخضر، بناء deterministic catalog selection/composition facade: mode + defendant count + seed يختار template صالحًا ثم compose، دون ربطه بالغرفة بعد.
+
+
+---
+
+## 2026-08-27 — Deterministic catalog composition facade
+
+**Changed**
+- أضيف compatibleCaseTemplates لتصفية catalog حسب DNA، defendant count، عدد slots الفعلي، وtemplate validation.
+- أضيف composeCaseFromCatalog كواجهة domain واحدة تختار template صالحًا حتميًا من seed ثم تشغّل composeCaseTemplate.
+- candidate list تُرتب قبل hash selection، لذلك تغيير ترتيب input لا يغيّر النتيجة.
+- أضيف CaseCatalogCompositionError للأعداد غير الصالحة، seed الفارغ، وعدم وجود template متوافق.
+- أضيفت اختبارات compatibility, same-seed determinism, input-order independence, invalid-template filtering, unsupported defendant count, وinput validation.
+
+**Reason**
+- فصل اختيار skeleton عن بنائه يمنع room/server من معرفة تفاصيل التوليد ويضمن أن كل قضية تبدأ من Template validated صالح للعدد والـDNA المحددين.
+
+**Remaining**
+- الـpre-game pipeline في CourtRoom لا يستدعي facade بعد.
+- لا توجد private briefs مشتقة من Knowledge Graph ولا variable-role player assignment من composed blueprint بعد.
+
+**Next**
+- تشغيل CI الكامل لهذه الخطوة فقط. إذا نجح، بناء role-specific private brief derivation من CaseBlueprint داخل Case Engine قبل أي room integration.

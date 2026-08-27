@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — deterministic CaseBlueprint composer under verification**
+**Phase 6 foundation — deterministic catalog composition facade under verification**
 
 ## Completed
 
@@ -26,7 +26,7 @@ Last updated: 2026-08-27
 
 - full repository/build audit before accepting a new live deploy.
 - dependency reproducibility recovery: Colyseus exact-version pin + canonical pnpm-lock.yaml.
-- charge truth and curated template layers completed; deterministic seeded Template → CaseBlueprint composer is now the active verification step.
+- charge truth, curated templates and seeded composer completed; deterministic catalog selection/composition is now the active verification step.
 - role-specific private briefs and variable-role Preparation integration.
 - pre-game room lock/timers and client networking.
 
@@ -36,9 +36,9 @@ Full source pipeline is verified green on commit `1c82cf2bdd6e391fc7d1d7a2b49f47
 
 ## Next exact implementation steps
 
-1. Verify the seeded deterministic composer with full CI.
-2. Add a catalog facade that resolves a compatible curated template from selected DNA/defendant count and composes it deterministically.
-3. Only after that passes, derive role-specific private briefs from the composed Knowledge Graph.
+1. Verify deterministic catalog selection/composition with full CI.
+2. Derive role-specific private briefs from the composed CaseBlueprint/Knowledge Graph.
+3. Verify brief privacy/knowledge boundaries before connecting composition to CourtRoom.
 
 ## Known feature limitations (not build errors)
 

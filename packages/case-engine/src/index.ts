@@ -6,3 +6,4 @@ export * from './validation.js';
 export * from './templates.js';
 export * from './curated.js';
 export * from './composer.js';
+export * from './catalogComposer.js';
