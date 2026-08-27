@@ -5,3 +5,4 @@ export * from './selection.js';
 export * from './validation.js';
 export * from './templates.js';
 export * from './curated.js';
+export * from './composer.js';

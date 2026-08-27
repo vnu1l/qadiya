@@ -314,7 +314,7 @@
 ## 6.3 Template Composition
 - [x] curated skeletons.
 - [x] parameter pools.
-- [ ] deterministic seeds.
+- [x] deterministic seeds.
 - [x] variant constraints.
 - [ ] locale-aware Arabic naming/background generation without stereotypes.
 

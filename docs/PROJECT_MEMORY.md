@@ -523,3 +523,14 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - Template validation يحدث قبل أي Composition ويمنع المراجع المفقودة، IDs المكررة، choice pools الفارغة، حدود المتهمين غير المتوافقة مع DNA، والدرجات/الأزمنة غير الصالحة.
 - أول catalog curated هو warehouse-access-misdirection، قضية اتهام خاطئ بدليل دخول إلكتروني ملتبس وشاهدة صادقة لكنها غير دقيقة.
 - هذه الطبقة ليست Composer ولا تولد CaseBlueprint بعد؛ أي seed/random resolution يبقى للخطوة التالية.
+
+
+## 33. Deterministic Case Composer
+
+- Composer يأخذ CaseDNA + CaseTemplate + seed نصي غير فارغ، ولا يستخدم Math.random.
+- نفس template revision + DNA + seed يجب أن ينتج CaseBlueprint مطابقًا byte-for-structure في كل تشغيل متوافق.
+- الـseed يتحول إلى token ثابت ولا يُخزن كنص خام داخل CaseBlueprint id.
+- character identity variations (name/age/gender/occupation/memory profile) تُحل من bounded pools عبر PRNG حتمي.
+- جميع symbolic ids في template تتحول إلى runtime ids namespaced تحت case id لمنع collisions.
+- لا يعيد composer أي Blueprint يحتوي validation errors؛ يمر دائمًا عبر validateCaseTemplate ثم validateCaseBlueprint.
+- Composition لا يربط القضية بالغرفة ولا يرسل الحقيقة لأي client؛ هذا domain-only output حتى تكتمل private brief/adaptation steps.

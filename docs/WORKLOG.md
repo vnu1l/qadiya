@@ -512,3 +512,29 @@
 
 **Next**
 - تشغيل CI الكامل لهذه الخطوة فقط. إذا أصبح أخضر، بناء deterministic seeded composer الذي ينتج CaseBlueprint ثم يمرره مباشرة إلى validateCaseBlueprint.
+
+
+---
+
+## 2026-08-27 — Seeded deterministic CaseBlueprint composer
+
+**Changed**
+- أضيف composeCaseTemplate كحد domain واضح: CaseDNA + validated CaseTemplate + seed → CaseBlueprint.
+- أضيف PRNG داخلي deterministic مبني على stable 32-bit hashing؛ لا Math.random في مسار composition.
+- كل symbolic character/location/fact/event/evidence/role/charge id يتحول إلى runtime id namespaced تحت case id مشتق حتميًا من template revision والseed.
+- character pools تُحل حتميًا للأسماء والعمر والجنس والمهنة وmemory profile.
+- كل المراجع الداخلية remapped إلى runtime ids قبل validation.
+- composer يرفض seed فارغ، template غير صالح، أو Blueprint نهائي يحتوي validation errors عبر CaseCompositionError typed.
+- أضيف guard أن عدد defendant slots الفعلي يجب أن يكون ضمن supportedDefendantCounts.
+- أضيفت اختبارات same-seed equality, different-seed case identity, final Blueprint validation, wrongful-accusation truth preservation, empty seed, وinvalid-template rejection.
+
+**Reason**
+- نحتاج توليدًا يمكن إعادة إنتاجه والتحقيق فيه. نفس seed يجب أن يعيد نفس القضية، ولا يجوز أن يظهر Runtime Blueprint إلا بعد مرور template validation وblueprint validation.
+
+**Remaining**
+- لا يوجد بعد اختيار Template تلقائي من catalog بعد mode/defendant count.
+- لا توجد role-specific private briefs مشتقة من Knowledge Graph.
+- لا يتم بعد ربط composed case بالـCourtRoom أو variable-role human assignment.
+
+**Next**
+- تشغيل CI الكامل لهذه الخطوة فقط. إذا كان أخضر، بناء deterministic catalog selection/composition facade: mode + defendant count + seed يختار template صالحًا ثم compose، دون ربطه بالغرفة بعد.

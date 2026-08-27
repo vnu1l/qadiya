@@ -294,6 +294,14 @@ export function validateCaseTemplate(template: CaseTemplate, dna: CaseDNA): Case
     }
   }
 
+  if (!template.supportedDefendantCounts.includes(template.defendantCharacterSlotIds.length)) {
+    issues.push({
+      code: 'TEMPLATE_DEFENDANT_SLOT_COUNT_UNSUPPORTED',
+      message: `Template ${template.id} does not support its concrete defendant slot count.`,
+      entityId: template.id,
+    });
+  }
+
   const locationIds = new Set(template.locations.map((location) => location.id));
   const factIds = new Set(template.facts.map((fact) => fact.id));
   const timelineIds = new Set(template.timeline.map((event) => event.id));
