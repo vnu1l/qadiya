@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — deployment hardening audit, then deterministic Case Composer**
+**Phase 6 foundation — audited deploy checkpoint, then deterministic Case Composer**
 
 ## Completed
 
@@ -32,14 +32,13 @@ Last updated: 2026-08-27
 
 ## Current verified blocker
 
-Dependency install, canonical lockfile, Build, and Typecheck are now verified. The first complete test run found one court-appointed defense compatibility bug; its matching algorithm is being corrected and regression-tested. Docker/smoke remain gated until tests are all green.
+Full source pipeline is verified green on commit `1c82cf2bdd6e391fc7d1d7a2b49f47e16f890563`: canonical install, build, typecheck, 54 unit tests, production Docker build, and same-container frontend/backend smoke all pass. The final documentation checkpoint must pass the same CI before it is treated as the deploy SHA.
 
 ## Next exact implementation steps
 
-1. Require green build + typecheck + all unit tests + production Docker smoke test on the canonical lockfile.
-2. Let Render deploy only the checks-passing main commit.
-3. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
-4. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
+1. Let the final audited documentation checkpoint pass the same CI and allow Render `checksPass` auto-deploy.
+2. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
+3. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
 
 ## Known feature limitations (not build errors)
 

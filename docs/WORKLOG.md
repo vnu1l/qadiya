@@ -443,3 +443,27 @@
 
 **Next**
 - require all tests green ثم Docker build + live-container smoke.
+
+
+---
+
+## 2026-08-27 — Full audit pipeline green
+
+**Verified**
+- canonical dependency install with `pnpm-lock.yaml`: PASS.
+- production build for shared, case-engine, web and server: PASS.
+- TypeScript/Svelte typecheck: PASS; Svelte reported 0 errors and 0 warnings.
+- Case Engine tests: 19/19 PASS.
+- Server/domain tests: 35/35 PASS, including the new multi-defendant defense compatibility regression.
+- Production Docker image build: PASS.
+- Same-container smoke test for frontend + backend + `/health` + `/api/build`: PASS.
+- CI run 33030376002 completed successfully for source commit `1c82cf2bdd6e391fc7d1d7a2b49f47e16f890563`.
+
+**Review conclusion**
+- لا يوجد build/typecheck/test/container error معروف في الكود الحالي.
+- التحذيرات المتبقية في سجل GitHub تخص runtime لبعض GitHub Actions القديمة التي يجبرها GitHub نفسه على Node 24؛ ليست تحذيرات Svelte/TypeScript أو فشلًا في QADIYA، ويمكن ترقية action revisions لاحقًا كصيانة CI مستقلة.
+- النواقص المسجلة في STATUS هي Features غير منفذة بعد وليست أخطاء مخفية يتم تجاهلها.
+
+**Next**
+- هذا التحديث التوثيقي يصبح checkpoint النهائي للمراجعة ويخضع لنفس CI؛ Render مرتبط بـmain وchecksPass، لذلك ينشر فقط بعد نجاح فحصه.
+- بعد التحقق من النسخة الحية نعود مباشرة إلى charge-element truth model ثم deterministic Case Composer.
