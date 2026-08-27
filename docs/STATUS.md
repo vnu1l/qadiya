@@ -1,14 +1,14 @@
 # QADIYA — STATUS
 
-Last updated: 2026-08-24
+Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — live Render preview handoff + first deterministic Case Composer next**
+**Phase 6 foundation — deployment hardening audit, then deterministic Case Composer**
 
 ## Completed
 
-- continuity/memory/worklog system enforced by CI.
+- continuity/memory/worklog system and mandatory AI/developer instructions.
 - modular fullscreen Game Shell/scenes/camera registry.
 - authoritative lobby rules/preferences/readiness.
 - structured Case Engine with timeline/knowledge validation, Case DNA and variable-role adaptation.
@@ -17,38 +17,37 @@ Last updated: 2026-08-24
 - shared counsel, lawyer accept/refuse, court-appointed fallback, Private host choices and 3-player self-representation.
 - server-only PrivateCaseVault for briefs, secrets, privileged consultation and retained memory.
 - PreparationCoordinator with hard blockers vs soft warnings, bounded retained notes, private defense consultations and note locking at court opening.
-- public Colyseus PreparationState exposes only readiness metadata, never memory or secret text.
-- judge-only court opening; unready state can be explicitly overridden, missing required participant/brief cannot.
-- atomic full-stack Docker deployment: frontend + backend always ship from the same commit.
-- GitHub CI builds/tests the final production container and smoke-tests `/`, `/health`, and `/api/build`.
-- Render Free Blueprint added for the development preview: Frankfurt, Docker, `main`, `checksPass`, `/health`.
-- live build metadata now supports Render's native Git commit/branch/repository environment variables.
+- public Colyseus PreparationState exposes readiness metadata only.
+- atomic full-stack Docker deployment contract: frontend + backend ship from one image/commit.
+- Render Free service/Blueprint exists and targets main with checksPass and /health.
+- Google Fonts shortlist is preserved in docs/FONT_REFERENCES.md for later visual work.
 
 ## In progress
 
-- one-time external Render account authorization / Blueprint creation to obtain the first public `onrender.com` URL.
+- full repository/build audit before accepting a new live deploy.
+- dependency reproducibility recovery: Colyseus exact-version pin + canonical pnpm-lock.yaml.
 - first deterministic Case DNA → validated CaseBlueprint composer.
-- generation of role-specific private briefs from structured case knowledge.
-- variable human-role assignment/adaptation into Preparation.
-- pre-game room lock/timers and automatic start orchestration.
-- client networking.
+- role-specific private briefs and variable-role Preparation integration.
+- pre-game room lock/timers and client networking.
+
+## Current verified blocker
+
+GitHub Actions currently fails during dependency installation before build because the previous floating `@colyseus/core: ^0.16.0` resolved to a newly published 0.16.x package containing an invalid npm workspace dependency. The current repair pins a known-good 0.16 set and bootstraps a canonical lockfile. No deploy is considered valid until CI passes.
 
 ## Next exact implementation steps
 
-1. Owner creates the Render Blueprint from `vnu1l/qadiya` once; no manual build configuration should be entered because `render.yaml` is authoritative.
-2. Verify the live domain: `/health` is 200, `/api/build.platform` is `render`, and `commitSha` equals GitHub `main`.
-3. Resume Case Engine work immediately: explicit charge-element truth model, then deterministic curated DNA → validated Blueprint composer.
-4. Derive role-specific private briefs/memory from the composed Knowledge Graph and populate PrivateCaseVault before Preparation.
-5. Connect variable-role adaptation to actual remaining human players and include those roles in Preparation.
-6. Connect LobbyScene to Colyseus and then centralize visual design/motion/layer tokens.
+1. Run CI with pinned Colyseus versions and generate `pnpm-lock.yaml` into the temporary automation branch.
+2. Commit that exact lockfile to main; remove temporary write permission/bootstrap endpoint and restore frozen installs in CI and Docker.
+3. Require green build + typecheck + all unit tests + production Docker smoke test.
+4. Let Render deploy only the checks-passing main commit.
+5. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
+6. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
 
-## Known limitations right now
+## Known feature limitations (not build errors)
 
-- there is no public Render URL until the repository is authorized in the owner's Render account once.
-- Render Free sleeps when idle and has ephemeral local storage; it is Preview only, not final Production.
 - no production Case DNA/template pool yet.
 - no actual judge-vote/defense-response timers yet; server hooks exist.
-- late join is not yet blocked during active pre-game/court lifecycle.
+- late join lock is not yet implemented during active pre-game/court lifecycle.
 - persistent identity/reconnect and role history are not implemented yet.
-- variable roles are still Case Engine definitions, not assigned room players.
-- Preparation currently starts immediately after core roles and therefore waits on missing briefs until the composer integration populates them.
+- variable roles are definitions, not assigned room players yet.
+- LobbyScene is still a visual placeholder and not connected to Colyseus.

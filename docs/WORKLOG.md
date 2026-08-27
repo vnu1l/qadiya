@@ -370,3 +370,32 @@
 
 **Next**
 - انتظار Render deploy، تنزيل `/api/build/dependency-lock`، تثبيت الملف في `main`، ثم حذف endpoint وإرجاع Docker وCI بالكامل إلى `--frozen-lockfile`.
+
+
+---
+
+## 2026-08-27 — Full repository audit: dependency reproducibility blocker
+
+**Changed**
+- راجعت بنية الـmonorepo والـshared contracts والـCase Engine والـserver domain/CourtRoom والواجهة وDocker وRender وGitHub Actions قبل طلب Deploy جديد.
+- كشف سجل GitHub Actions أن جميع الفحوص تتوقف في install قبل build بسبب نشر `@colyseus/core@0.16.25` اعتمادًا داخليًا بصيغة `workspace:^`؛ السبب أن `apps/server/package.json` كان يستخدم نطاقات `^0.16.0` العائمة.
+- ثُبتت سلسلة Colyseus الحالية على إصدارات 0.16 محددة ومتوافقة: core 0.16.16، schema 3.0.68، وws-transport 0.16.5 بدل السماح بتغيرها تلقائيًا.
+- أضيف Bootstrap CI لمرة واحدة يولد `pnpm-lock.yaml` من الحزم المثبتة ويدفعه إلى فرع `automation/pnpm-lock`، ثم يكمل install بوضع frozen.
+- صلاحية GitHub Actions المطلوبة لهذه الخطوة مؤقتًا هي `contents: write`; يجب إزالتها فور تثبيت lockfile في main.
+
+**Reason**
+- لا يجوز نشر Preview بينما CI أحمر، ولا الاعتماد على نطاق dependencies متحرك يمكن أن يكسر البناء دون تغيير كود QADIYA.
+- الهدف هو الوصول إلى build قابل لإعادة الإنتاج ثم إعادة Docker وCI بالكامل إلى `--frozen-lockfile`.
+
+**Review notes**
+- لم أجد TODO/FIXME مخفية أو `@ts-ignore` في المصدر.
+- منطق lobby/role allocation/preparation/knowledge validation الحالي متسق مع القرارات الموثقة، بينما النواقص المعروفة مثل reconnect/timers/client networking تبقى Features غير مكتملة وليست أخطاء بناء.
+- نموذج عناصر التهمة ما زال مرحلة تنفيذ تالية موثقة، وليس شيئًا سيتم ترقيعه أثناء إصلاح النشر.
+
+**Remaining**
+- يجب أن تنجح GitHub Actions فعليًا بعد تثبيت dependencies.
+- بعد توليد lockfile: تثبيته في main، حذف صلاحية write وخطوة bootstrap والـdependency-lock endpoint المؤقت، وإرجاع Docker build إلى frozen بالكامل.
+- بعد ذلك فقط يتم تشغيل/قبول Render deploy وفحص `/`, `/health`, و`/api/build` من النسخة الحية.
+
+**Next**
+- انتظار CI لهذا commit، أخذ lockfile من `automation/pnpm-lock`، عمل cleanup commit نهائي، ثم إعادة جميع فحوص CI والنشر إلى Render.

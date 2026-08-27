@@ -11,9 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@colyseus/core": "^0.16.0",
-    "@colyseus/schema": "^3.0.0",
-    "@colyseus/ws-transport": "^0.16.0",
+    "@colyseus/core": "0.16.16",
+    "@colyseus/schema": "3.0.68",
+    "@colyseus/ws-transport": "0.16.5",
     "@qadiya/case-engine": "workspace:*",
     "@qadiya/shared": "workspace:*",
     "cors": "^2.8.5",
