@@ -423,3 +423,23 @@
 
 **Next**
 - تشغيل كامل pipeline؛ لا يُقبل Deploy إلا إذا أصبح أخضر بالكامل.
+
+
+---
+
+## 2026-08-27 — Court-appointed defense compatibility matching
+
+**Changed**
+- بعد نجاح build وtypecheck، كشف test واحد خللًا في court-appointed fallback: كان النظام يأخذ أول N محامين من الترتيب ثم يوزعهم، فيمكن أن يختار مجموعة لا تستطيع تمثيل متهم بعينه بسبب رفض سابق رغم وجود محامين صالحين لاحقًا.
+- استبدل الاختيار بـbounded compatibility search على مجموعة اللاعبين الصغيرة: يختار مجموعة المحامين الأعلى ترتيبًا التي يوجد لها matching صالح مع المتهمين غير المحسومين.
+- يضمن البحث أن كل مقعد دفاع جديد يُستخدم فعليًا، ويحترم كل lawyer↔defendant rejection قبل تثبيت المجموعة.
+- أضيف test متعدد المتهمين يمنع regression الذي يفشل فيه ranked-prefix بينما توجد مجموعة لاحقة صالحة.
+
+**Reason**
+- رفض المحامي لمتهم يجب أن يكون constraint داخل عملية الاختيار نفسها، لا فحصًا متأخرًا بعد حجز المقاعد.
+
+**Remaining**
+- إعادة كامل CI؛ Docker/smoke لم يصلا للتنفيذ في الجولة السابقة لأن test gate أوقفهما.
+
+**Next**
+- require all tests green ثم Docker build + live-container smoke.

@@ -101,6 +101,44 @@ describe('RoleAllocationCoordinator', () => {
     expect(lawyer).not.toBe('p3');
   });
 
+
+  it('finds a compatible multi-defendant court-appointed set instead of taking an invalid ranked prefix', () => {
+    const players = [
+      player('p1'),
+      player('p2'),
+      player('p3'),
+      player('p4'),
+      player('p5'),
+      player('p6'),
+      player('p7'),
+    ];
+    const coordinator = new RoleAllocationCoordinator(players, casualRules(), 2, 2, alwaysFirst);
+
+    coordinator.start();
+    coordinator.castJudgeVote('p7', 'p3');
+    coordinator.closeJudgeVote();
+
+    coordinator.proposeDefenseLawyer('p1', 'p4');
+    coordinator.respondDefenseRequest('p4', 'p1', false);
+    coordinator.proposeDefenseLawyer('p1', 'p5');
+    coordinator.respondDefenseRequest('p5', 'p1', false);
+
+    coordinator.courtAppointUnresolvedDefense();
+    const plan = coordinator.getCompletedPlan();
+    const p1Representation = plan?.defenseRepresentations.find((representation) =>
+      representation.defendantPlayerIds.includes('p1'),
+    );
+    const distinctLawyers = new Set(
+      plan?.defenseRepresentations
+        .map((representation) => representation.lawyerPlayerId)
+        .filter((lawyerId): lawyerId is string => Boolean(lawyerId)),
+    );
+
+    expect(p1Representation?.lawyerPlayerId).toBeDefined();
+    expect(['p4', 'p5']).not.toContain(p1Representation?.lawyerPlayerId);
+    expect(distinctLawyers.size).toBe(2);
+  });
+
   it('supports the full three-player private core through self representation', () => {
     const players = [player('p1'), player('p2'), player('p3')];
     const coordinator = new RoleAllocationCoordinator(players, privateRules(), 1, 0, alwaysFirst);

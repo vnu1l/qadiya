@@ -32,7 +32,7 @@ Last updated: 2026-08-27
 
 ## Current verified blocker
 
-The dependency-install blocker is fixed and a canonical `pnpm-lock.yaml` has been generated. The first real TypeScript build exposed ESM relative-import issues; those are corrected across shared/case-engine/server and the project is awaiting a complete clean CI pass. No deploy is considered valid until that pipeline passes.
+Dependency install, canonical lockfile, Build, and Typecheck are now verified. The first complete test run found one court-appointed defense compatibility bug; its matching algorithm is being corrected and regression-tested. Docker/smoke remain gated until tests are all green.
 
 ## Next exact implementation steps
 

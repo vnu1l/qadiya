@@ -68,6 +68,72 @@ function unique(values: readonly string[]): string[] {
   return [...new Set(values)];
 }
 
+interface CourtAppointedSelection {
+  lawyerIds: string[];
+  lawyerToDefendant: Map<string, string>;
+}
+
+function findCourtAppointedSelection(
+  candidateIds: readonly string[],
+  requiredCount: number,
+  defendantIds: readonly string[],
+  canRepresent: (lawyerId: string, defendantId: string) => boolean,
+): CourtAppointedSelection | null {
+  if (requiredCount === 0) return { lawyerIds: [], lawyerToDefendant: new Map() };
+  if (requiredCount > candidateIds.length || requiredCount > defendantIds.length) return null;
+
+  const assignDistinctDefendants = (lawyerIds: readonly string[]): Map<string, string> | null => {
+    const orderedLawyers = [...lawyerIds].sort((a, b) => {
+      const aOptions = defendantIds.filter((defendantId) => canRepresent(a, defendantId)).length;
+      const bOptions = defendantIds.filter((defendantId) => canRepresent(b, defendantId)).length;
+      return aOptions - bOptions || candidateIds.indexOf(a) - candidateIds.indexOf(b);
+    });
+    const usedDefendants = new Set<string>();
+    const assignment = new Map<string, string>();
+
+    const visit = (index: number): boolean => {
+      if (index >= orderedLawyers.length) return true;
+      const lawyerId = orderedLawyers[index]!;
+
+      for (const defendantId of defendantIds) {
+        if (usedDefendants.has(defendantId) || !canRepresent(lawyerId, defendantId)) continue;
+        usedDefendants.add(defendantId);
+        assignment.set(lawyerId, defendantId);
+        if (visit(index + 1)) return true;
+        assignment.delete(lawyerId);
+        usedDefendants.delete(defendantId);
+      }
+
+      return false;
+    };
+
+    return visit(0) ? assignment : null;
+  };
+
+  const chosen: string[] = [];
+  let result: CourtAppointedSelection | null = null;
+
+  const choose = (startIndex: number): boolean => {
+    if (chosen.length === requiredCount) {
+      const assignment = assignDistinctDefendants(chosen);
+      if (!assignment) return false;
+      result = { lawyerIds: [...chosen], lawyerToDefendant: assignment };
+      return true;
+    }
+
+    const remainingNeeded = requiredCount - chosen.length;
+    for (let index = startIndex; index <= candidateIds.length - remainingNeeded; index += 1) {
+      chosen.push(candidateIds[index]!);
+      if (choose(index + 1)) return true;
+      chosen.pop();
+    }
+    return false;
+  };
+
+  choose(0);
+  return result;
+}
+
 /**
  * Orchestrates only the human core-role assignment. It intentionally does not
  * mutate Colyseus state: once complete, its plan is passed to the atomic
@@ -287,15 +353,30 @@ export class RoleAllocationCoordinator {
     const candidatePool = rankCourtAppointedDefense(
       this.activePlayers().filter((player) => !this.coreReservedIds().has(player.playerId) && !acceptedLawyers.includes(player.playerId)),
     );
-    const newLawyers = candidatePool.slice(0, newLawyersNeeded).map((candidate) => candidate.playerId);
-    if (newLawyers.length !== newLawyersNeeded) {
-      throw new RoleAllocationError('NO_COURT_APPOINTED_DEFENSE', 'Not enough opted-in lawyers are available for court appointment.');
+    const canRepresent = (lawyerId: string, defendantId: string) =>
+      !(this.rejectedDefenseByDefendant.get(defendantId)?.has(lawyerId) ?? false);
+    const selected = findCourtAppointedSelection(
+      candidatePool.map((candidate) => candidate.playerId),
+      newLawyersNeeded,
+      unresolved,
+      canRepresent,
+    );
+
+    if (!selected) {
+      throw new RoleAllocationError(
+        'NO_COURT_APPOINTED_DEFENSE',
+        'No compatible set of opted-in lawyers can satisfy the unresolved defendants.',
+      );
     }
 
-    const allLawyers = [...acceptedLawyers, ...newLawyers];
+    for (const [lawyerId, defendantId] of selected.lawyerToDefendant) {
+      this.defenseChoices.set(defendantId, { kind: 'lawyer', lawyerPlayerId: lawyerId, accepted: true });
+    }
+
+    const allLawyers = [...acceptedLawyers, ...selected.lawyerIds];
     for (const defendantId of unresolved) {
-      const rejected = this.rejectedDefenseByDefendant.get(defendantId) ?? new Set<string>();
-      const preferred = allLawyers.find((lawyerId) => !rejected.has(lawyerId));
+      if (this.defenseChoices.has(defendantId)) continue;
+      const preferred = allLawyers.find((lawyerId) => canRepresent(lawyerId, defendantId));
       if (!preferred) {
         throw new RoleAllocationError('ALL_DEFENSE_OPTIONS_REJECTED', `No court-appointed lawyer remains for ${defendantId}.`);
       }
