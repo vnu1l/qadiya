@@ -312,10 +312,10 @@
 - [ ] complexity.
 
 ## 6.3 Template Composition
-- [ ] curated skeletons.
-- [ ] parameter pools.
+- [x] curated skeletons.
+- [x] parameter pools.
 - [ ] deterministic seeds.
-- [ ] variant constraints.
+- [x] variant constraints.
 - [ ] locale-aware Arabic naming/background generation without stereotypes.
 
 ## 6.4 Variable Role Selection

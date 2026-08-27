@@ -513,3 +513,13 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - Evidence لا يحدد الحقيقة؛ الدليل قد يثبت أو يفشل في إثبات Facts أمام المحكمة لاحقًا، بينما Ground Truth ثابت.
 - chargeGroundTruthSatisfied يعني أن كل العناصر متحققة موضوعيًا فقط، ولا يعني أن الادعاء أثبتها أو أن القاضي يجب أن يدين.
 - لكل تهمة Burden Standard صريح حتى تستطيع طبقة المحكمة لاحقًا تقييم الإثبات بشكل منفصل عن الحقيقة.
+
+
+## 32. Curated Case Templates
+
+- Case DNA وCase Template طبقتان منفصلتان: الـDNA يصف نوع/تعقيد/نمط القضية، والـTemplate يصف skeleton منظمًا يمكن تحويله لاحقًا إلى CaseBlueprint.
+- الـTemplate يحتوي symbolic ids فقط قبل التوليد: character slots, locations, facts, timeline, knowledge, evidence, variable roles, charges.
+- تنويع الهوية يتم من bounded choice pools (أسماء/جنس/مهنة/ذاكرة/عمر) ولا يحتوي template على callbacks أو Math.random.
+- Template validation يحدث قبل أي Composition ويمنع المراجع المفقودة، IDs المكررة، choice pools الفارغة، حدود المتهمين غير المتوافقة مع DNA، والدرجات/الأزمنة غير الصالحة.
+- أول catalog curated هو warehouse-access-misdirection، قضية اتهام خاطئ بدليل دخول إلكتروني ملتبس وشاهدة صادقة لكنها غير دقيقة.
+- هذه الطبقة ليست Composer ولا تولد CaseBlueprint بعد؛ أي seed/random resolution يبقى للخطوة التالية.

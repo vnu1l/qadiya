@@ -490,3 +490,25 @@
 
 **Next**
 - انتظار CI الكامل لهذه الخطوة فقط. إذا كان أخضر، الانتقال إلى curated deterministic DNA/template input للـComposer، دون ربطه بالغرفة بعد.
+
+
+---
+
+## 2026-08-27 — Curated deterministic template input
+
+**Changed**
+- أضيف CaseTemplate contract مستقل عن CaseBlueprint مع symbolic references لكل الشخصيات والمواقع والـFacts والـTimeline والـKnowledge والـEvidence والأدوار والتهم.
+- أضيف bounded choice-pool model للشخصيات بدل أي randomness داخل القالب نفسه.
+- أضيف validateCaseTemplate وvalidateCaseTemplateCatalog لمنع duplicate ids, orphan DNA, unknown refs, empty pools, invalid age/time/travel/score ranges, والتهم بلا عناصر أو truth basis.
+- أضيف أول curated DNA/template pair: warehouse-access-misdirection:v1 كنواة اختبار فعلية للـComposer القادم.
+- أضيفت اختبارات للـcatalog نفسه، purity/structured input، choice pools، missing fact refs، duplicate symbolic ids، DNA defendant bounds، وorphan DNA.
+
+**Reason**
+- نحتاج input ثابتًا ومراجعًا قبل كتابة مولد. الـComposer القادم يجب أن يستهلك عقدًا صحيحًا بدل أن يخترع القضية والمنطق في نفس الدالة.
+
+**Remaining**
+- لا يوجد seed resolution أو CaseBlueprint composition بعد.
+- لا يتم حتى الآن توصيل catalog بالـlobby أو room lifecycle.
+
+**Next**
+- تشغيل CI الكامل لهذه الخطوة فقط. إذا أصبح أخضر، بناء deterministic seeded composer الذي ينتج CaseBlueprint ثم يمرره مباشرة إلى validateCaseBlueprint.

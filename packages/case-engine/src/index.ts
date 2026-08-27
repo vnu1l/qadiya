@@ -3,3 +3,5 @@ export * from './model.js';
 export * from './roleAdaptation.js';
 export * from './selection.js';
 export * from './validation.js';
+export * from './templates.js';
+export * from './curated.js';
