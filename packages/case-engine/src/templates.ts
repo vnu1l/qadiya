@@ -72,6 +72,7 @@ export interface TemplateKnowledgeItem {
   id: string;
   holderCharacterSlotId: string;
   factId: string;
+  perceivedDescription: string;
   source: TemplateKnowledgeSource;
   accuracy: number;
   confidence: number;
@@ -380,6 +381,13 @@ export function validateCaseTemplate(template: CaseTemplate, dna: CaseDNA): Case
       issues.push({
         code: 'TEMPLATE_KNOWLEDGE_UNKNOWN_FACT',
         message: `Knowledge ${item.id} references unknown fact ${item.factId}.`,
+        entityId: item.id,
+      });
+    }
+    if (!item.perceivedDescription.trim()) {
+      issues.push({
+        code: 'TEMPLATE_KNOWLEDGE_MISSING_PERCEPTION',
+        message: `Knowledge ${item.id} must define the holder-facing perceived description.`,
         entityId: item.id,
       });
     }

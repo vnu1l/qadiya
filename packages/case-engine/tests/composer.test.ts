@@ -73,6 +73,19 @@ describe('deterministic case composer', () => {
     expect(composed.validationIssues).toEqual(issues);
   });
 
+  it('never substitutes objective fact text for a character perception', () => {
+    const composed = composeCaseTemplate(
+      CURATED_CASE_DNAS[0]!,
+      CURATED_CASE_TEMPLATES[0]!,
+      { seed: 'perception-boundary' },
+    );
+
+    const imperfect = composed.blueprint.knowledge.find((item) => item.accuracy < 1)!;
+    const objectiveFact = composed.blueprint.facts.find((fact) => fact.id === imperfect.factId)!;
+    expect(imperfect.perceivedDescription).not.toBe(objectiveFact.description);
+    expect(imperfect.perceivedDescription.trim().length).toBeGreaterThan(0);
+  });
+
   it('preserves wrongful-accusation ground truth independently from evidence strength', () => {
     const composed = composeCaseTemplate(
       CURATED_CASE_DNAS[0]!,

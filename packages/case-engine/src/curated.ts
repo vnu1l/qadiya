@@ -119,6 +119,7 @@ export const CURATED_CASE_TEMPLATES: readonly CaseTemplate[] = [
         id: 'knowledge-witness-build',
         holderCharacterSlotId: 'witness',
         factId: 'fact-witness-saw-similar-build',
+        perceivedDescription: 'رأيت شخصًا ببنية تشبه المتهم، وأظن أنه كان هو رغم أنني لم أر الوجه بوضوح.',
         source: {
           kind: 'direct-observation',
           sourceTimelineEventId: 'event-illegal-entry',
@@ -133,6 +134,7 @@ export const CURATED_CASE_TEMPLATES: readonly CaseTemplate[] = [
         id: 'knowledge-defendant-left',
         holderCharacterSlotId: 'defendant',
         factId: 'fact-defendant-left-before-entry',
+        perceivedDescription: 'أتذكر أنني غادرت المنطقة ووصلت إلى الشارع قبل وقت الدخول إلى المستودع.',
         source: {
           kind: 'self-memory',
           sourceTimelineEventId: 'event-defendant-left',

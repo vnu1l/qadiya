@@ -543,3 +543,11 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - composeCaseFromCatalog يختار Template بطريقة حتمية من seed ثم يستدعي composeCaseTemplate؛ لا يوجد Math.random ولا client authority في هذا القرار.
 - Template غير صالح يُستبعد بالكامل ولا يصل إلى Composer.
 - عدم وجود Template صالح ينتج typed error واضح ولا fallback عشوائي أو قضية ناقصة.
+
+
+## 35. Perceived Knowledge Boundary
+
+- كل KnowledgeItem يملك perceivedDescription مستقلة عن CaseFact.description الموضوعية.
+- Client/private brief لا يقرأ النص الحقيقي للـFact مباشرة؛ يعرض فقط perceivedDescription الخاصة بصاحب المعرفة.
+- accuracy/confidence/precision تصف علاقة الإدراك بالحقيقة، لكنها لا تكفي وحدها لمنع تسريب الحقيقة إذا كان النص نفسه موضوعيًا؛ لذلك perceivedDescription إلزامية.
+- الشاهد قد يملك إدراكًا صادقًا لكنه خاطئ أو غير دقيق، بينما Ground Truth يبقى على السيرفر.

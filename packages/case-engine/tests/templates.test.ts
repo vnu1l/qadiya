@@ -30,6 +30,13 @@ describe('curated case template catalog', () => {
     expect(issues.some((issue) => issue.code === 'TEMPLATE_EMPTY_CHOICE_POOL')).toBe(true);
   });
 
+  it('rejects a knowledge item without perceived text', () => {
+    const template = templateCopy();
+    template.knowledge[0]!.perceivedDescription = ' ';
+    const issues = validateCaseTemplate(template, CURATED_CASE_DNAS[0]!);
+    expect(issues.some((issue) => issue.code === 'TEMPLATE_KNOWLEDGE_MISSING_PERCEPTION')).toBe(true);
+  });
+
   it('rejects timeline references to facts that the template does not define', () => {
     const template = templateCopy();
     template.timeline[0]!.factIds = ['missing-fact'];

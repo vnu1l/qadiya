@@ -36,6 +36,7 @@ function validCase(): CaseBlueprint {
         id: 'knowledge-1',
         holderCharacterId: 'wit-1',
         factId: 'fact-presence',
+        perceivedDescription: 'رأيت شخصًا قرب المستودع وظننت أنه سالم.',
         source: { kind: 'direct-observation', sourceTimelineEventId: 'event-1', precisionLimit: 'approximate' },
         accuracy: 0.8,
         confidence: 0.95,
@@ -131,6 +132,12 @@ describe('validateCaseBlueprint', () => {
     const blueprint = validCase();
     blueprint.knowledge[0]!.precision = 'exact';
     expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
+  });
+
+  it('rejects knowledge without a holder-facing perception', () => {
+    const blueprint = validCase();
+    blueprint.knowledge[0]!.perceivedDescription = '   ';
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_MISSING_PERCEPTION')).toBe(true);
   });
 });
 

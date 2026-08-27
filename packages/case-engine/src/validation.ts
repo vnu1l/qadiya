@@ -288,6 +288,15 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
       });
     }
 
+    if (!item.perceivedDescription.trim()) {
+      issues.push({
+        severity: 'error',
+        code: 'KNOWLEDGE_MISSING_PERCEPTION',
+        message: `Knowledge ${item.id} must define what the holder actually perceives/remembers.`,
+        entityId: item.id,
+      });
+    }
+
     if (!inUnitInterval(item.accuracy) || !inUnitInterval(item.confidence)) {
       issues.push({
         severity: 'error',

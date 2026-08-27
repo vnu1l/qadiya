@@ -81,6 +81,11 @@ export interface KnowledgeItem {
   id: string;
   holderCharacterId: string;
   factId: string;
+  /**
+   * What the character actually remembers/believes they perceived. Client
+   * briefs use this text, never the objective CaseFact.description.
+   */
+  perceivedDescription: string;
   source: KnowledgeSource;
   accuracy: number;
   confidence: number;

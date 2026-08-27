@@ -213,6 +213,7 @@ export function composeCaseTemplate(
       id: `${caseId}:knowledge:${item.id}`,
       holderCharacterId: mapRequired(characterIds, item.holderCharacterSlotId, `knowledge ${item.id}`),
       factId: mapRequired(factIds, item.factId, `knowledge ${item.id}`),
+      perceivedDescription: item.perceivedDescription,
       source: {
         kind: item.source.kind,
         sourceEntityId: item.source.sourceCharacterSlotId

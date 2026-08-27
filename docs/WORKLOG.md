@@ -560,3 +560,24 @@
 
 **Next**
 - تشغيل CI الكامل لهذه الخطوة فقط. إذا نجح، بناء role-specific private brief derivation من CaseBlueprint داخل Case Engine قبل أي room integration.
+
+
+---
+
+## 2026-08-27 — Perceived knowledge privacy boundary
+
+**Changed**
+- أضيف perceivedDescription إلى runtime KnowledgeItem وTemplateKnowledgeItem.
+- Composer ينقل perceivedDescription كما هي ولا يستبدلها بـCaseFact.description.
+- Validator يرفض أي Knowledge بدون holder-facing perception، سواء في Template أو Blueprint.
+- حدث أول curated case بحيث الشاهدة تتذكر/تعتقد أنها رأت شخصًا يشبه المتهم، بينما الحقيقة الموضوعية تبقى منفصلة.
+- أضيفت اختبارات تمنع رجوع تسريب objective fact text إلى شخصية ذات accuracy أقل من 1.
+
+**Reason**
+- accuracy رقم وحده لا يمنع تسريب الحقيقة. إذا أعطينا الشاهد النص الموضوعي للـFact فسنعطيه Ground Truth حتى لو قلنا إن دقته 72%. هذه الطبقة تفصل ما حدث فعلًا عما تعتقد الشخصية أنها رأته.
+
+**Remaining**
+- Private Brief derivation لم يُبنَ بعد؛ الخطوة التالية ستستخدم perceivedDescription فقط للذاكرة الخاصة.
+
+**Next**
+- تشغيل CI الكامل. إذا نجح، بناء role-specific private brief derivation مع اختبارات تمنع ظهور charge truth/basis facts أو معرفة شخص آخر.

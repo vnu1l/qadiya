@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — deterministic catalog composition facade under verification**
+**Phase 6 foundation — perceived-knowledge boundary under verification**
 
 ## Completed
 
@@ -36,9 +36,9 @@ Full source pipeline is verified green on commit `1c82cf2bdd6e391fc7d1d7a2b49f47
 
 ## Next exact implementation steps
 
-1. Verify deterministic catalog selection/composition with full CI.
-2. Derive role-specific private briefs from the composed CaseBlueprint/Knowledge Graph.
-3. Verify brief privacy/knowledge boundaries before connecting composition to CourtRoom.
+1. Verify perceivedDescription separation with full CI.
+2. Derive role-specific private briefs using only holder-facing knowledge/evidence permissions.
+3. Prove briefs never expose charge truth/basis facts or another character's private knowledge before CourtRoom integration.
 
 ## Known feature limitations (not build errors)
 
