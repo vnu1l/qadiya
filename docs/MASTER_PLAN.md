@@ -279,8 +279,8 @@
 - [ ] ambiguity.
 
 ## 5.7 Charges
-- [ ] charge elements.
-- [ ] burden model.
+- [x] charge elements.
+- [x] burden model.
 - [ ] evidence relations.
 - [ ] alternative/lesser outcome support later.
 

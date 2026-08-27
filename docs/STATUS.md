@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — audited deploy checkpoint, then deterministic Case Composer**
+**Phase 6 foundation — explicit charge truth model under verification**
 
 ## Completed
 
@@ -26,7 +26,7 @@ Last updated: 2026-08-27
 
 - full repository/build audit before accepting a new live deploy.
 - dependency reproducibility recovery: Colyseus exact-version pin + canonical pnpm-lock.yaml.
-- first deterministic Case DNA → validated CaseBlueprint composer.
+- explicit charge-element ground-truth model, then first deterministic Case DNA → validated CaseBlueprint composer.
 - role-specific private briefs and variable-role Preparation integration.
 - pre-game room lock/timers and client networking.
 
@@ -36,9 +36,9 @@ Full source pipeline is verified green on commit `1c82cf2bdd6e391fc7d1d7a2b49f47
 
 ## Next exact implementation steps
 
-1. Let the final audited documentation checkpoint pass the same CI and allow Render `checksPass` auto-deploy.
-2. Verify live `/`, `/health`, and `/api/build`; live commitSha must equal GitHub main.
-3. Resume Case Engine: explicit charge-element truth model → deterministic curated DNA → validated Blueprint composer.
+1. Verify the explicit charge-element truth model with full CI.
+2. Add curated deterministic DNA/template input without composing yet.
+3. Build the deterministic DNA → validated Blueprint composer only after the template layer passes its own tests.
 
 ## Known feature limitations (not build errors)
 

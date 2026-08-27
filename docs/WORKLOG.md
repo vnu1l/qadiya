@@ -467,3 +467,26 @@
 **Next**
 - هذا التحديث التوثيقي يصبح checkpoint النهائي للمراجعة ويخضع لنفس CI؛ Render مرتبط بـmain وchecksPass، لذلك ينشر فقط بعد نجاح فحصه.
 - بعد التحقق من النسخة الحية نعود مباشرة إلى charge-element truth model ثم deterministic Case Composer.
+
+
+---
+
+## 2026-08-27 — Explicit charge-element ground-truth model
+
+**Changed**
+- استبدلت ChargeDefinition.elementFactIds بنموذج Legal Elements صريح.
+- كل عنصر يملك id/title وtruth: satisfied | not-satisfied server-only وbasisFactIds تربطه بوقائع Ground Truth.
+- أضيف BurdenStandard للتهمة، دون استخدامه بعد للحكم الآلي؛ الهدف تثبيت العقد الصحيح قبل Composer/Court proof layer.
+- أضيف chargeGroundTruthSatisfied() لحساب الحقيقة الموضوعية للتهمة من عناصرها فقط.
+- Validator يرفض: تهمة بلا متهم، متهمًا مكررًا، تهمة بلا عناصر، element id مكررًا عبر القضية، عنصرًا بلا truth basis، أو عنصرًا يشير إلى Fact غير موجود.
+- أضيفت اختبارات جديدة للفصل بين objective truth وcourtroom proof ولحدود النموذج.
+
+**Reason**
+- QADIYA تفصل الحقيقة عن الحكم. لذلك لا يجوز أن تكون التهمة صحيحة مساوية لوجود Evidence أو لانطباع القاضي؛ الحقيقة يجب أن تكون مشتقة من عناصر قانونية مرتبطة بـGround Truth، بينما الإثبات سيأتي كطبقة مستقلة لاحقًا.
+
+**Remaining**
+- لا يوجد بعد Composer يولد هذه العناصر من DNA/template.
+- لا توجد بعد evidence→charge-element proof relations أو verdict proof evaluation؛ هذه مراحل لاحقة ولا يجب خلطها بخطوة الحقيقة الحالية.
+
+**Next**
+- انتظار CI الكامل لهذه الخطوة فقط. إذا كان أخضر، الانتقال إلى curated deterministic DNA/template input للـComposer، دون ربطه بالغرفة بعد.

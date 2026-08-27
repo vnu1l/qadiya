@@ -127,11 +127,33 @@ export interface RoleDefinition {
   engagement: RoleEngagement;
 }
 
+export type BurdenStandard =
+  | 'beyond-reasonable-doubt'
+  | 'clear-and-convincing'
+  | 'preponderance';
+
+export type ChargeElementTruth = 'satisfied' | 'not-satisfied';
+
+export interface ChargeElementDefinition {
+  /** Stable legal-element id, independent from evidence or presentation order. */
+  id: string;
+  title: string;
+  /** Objective server-only truth, not the courtroom proof state. */
+  truth: ChargeElementTruth;
+  /** Ground-truth facts that justify the element truth state. */
+  basisFactIds: string[];
+}
+
 export interface ChargeDefinition {
   id: string;
   title: string;
   defendantIds: string[];
-  elementFactIds: string[];
+  burden: BurdenStandard;
+  elements: ChargeElementDefinition[];
+}
+
+export function chargeGroundTruthSatisfied(charge: ChargeDefinition): boolean {
+  return charge.elements.length > 0 && charge.elements.every((element) => element.truth === 'satisfied');
 }
 
 export interface CaseBlueprint {

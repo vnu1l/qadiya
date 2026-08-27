@@ -165,6 +165,7 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
   const factIds = new Set(caseFile.facts.map((fact) => fact.id));
   const locationIds = new Set(caseFile.locations.map((location) => location.id));
   const timelineIds = new Set(caseFile.timeline.map((event) => event.id));
+  const chargeElementIds = new Set<string>();
 
   const collections = [
     ['character', caseFile.characters],
@@ -385,6 +386,24 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
   }
 
   for (const charge of caseFile.charges) {
+    if (charge.defendantIds.length === 0) {
+      issues.push({
+        severity: 'error',
+        code: 'CHARGE_HAS_NO_DEFENDANT',
+        message: `Charge ${charge.id} must apply to at least one defendant.`,
+        entityId: charge.id,
+      });
+    }
+
+    if (new Set(charge.defendantIds).size !== charge.defendantIds.length) {
+      issues.push({
+        severity: 'error',
+        code: 'CHARGE_DUPLICATE_DEFENDANT',
+        message: `Charge ${charge.id} contains the same defendant more than once.`,
+        entityId: charge.id,
+      });
+    }
+
     for (const defendantId of charge.defendantIds) {
       if (!caseFile.defendantIds.includes(defendantId)) {
         issues.push({
@@ -396,14 +415,44 @@ export function validateCaseBlueprint(caseFile: CaseBlueprint): ValidationIssue[
       }
     }
 
-    for (const factId of charge.elementFactIds) {
-      if (!factIds.has(factId)) {
+    if (charge.elements.length === 0) {
+      issues.push({
+        severity: 'error',
+        code: 'CHARGE_HAS_NO_ELEMENTS',
+        message: `Charge ${charge.id} must define at least one legal element.`,
+        entityId: charge.id,
+      });
+    }
+
+    for (const element of charge.elements) {
+      if (chargeElementIds.has(element.id)) {
         issues.push({
           severity: 'error',
-          code: 'CHARGE_UNKNOWN_FACT',
-          message: `Charge ${charge.id} references unknown element fact ${factId}.`,
-          entityId: charge.id,
+          code: 'DUPLICATE_CHARGE_ELEMENT_ID',
+          message: `Charge element id ${element.id} is duplicated across the case.`,
+          entityId: element.id,
         });
+      }
+      chargeElementIds.add(element.id);
+
+      if (element.basisFactIds.length === 0) {
+        issues.push({
+          severity: 'error',
+          code: 'CHARGE_ELEMENT_HAS_NO_TRUTH_BASIS',
+          message: `Charge element ${element.id} has no ground-truth fact basis.`,
+          entityId: element.id,
+        });
+      }
+
+      for (const factId of element.basisFactIds) {
+        if (!factIds.has(factId)) {
+          issues.push({
+            severity: 'error',
+            code: 'CHARGE_ELEMENT_UNKNOWN_FACT',
+            message: `Charge element ${element.id} references unknown basis fact ${factId}.`,
+            entityId: element.id,
+          });
+        }
       }
     }
   }

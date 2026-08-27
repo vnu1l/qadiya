@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { hasValidationErrors, type CaseBlueprint, validateCaseBlueprint } from '../src';
+import {
+  chargeGroundTruthSatisfied,
+  hasValidationErrors,
+  type CaseBlueprint,
+  validateCaseBlueprint,
+} from '../src';
 
 function validCase(): CaseBlueprint {
   return {
@@ -69,7 +74,20 @@ function validCase(): CaseBlueprint {
       },
     ],
     charges: [
-      { id: 'charge-1', title: 'دخول غير مشروع', defendantIds: ['def-1'], elementFactIds: ['fact-presence'] },
+      {
+        id: 'charge-1',
+        title: 'دخول غير مشروع',
+        defendantIds: ['def-1'],
+        burden: 'beyond-reasonable-doubt',
+        elements: [
+          {
+            id: 'charge-1:presence',
+            title: 'وجود المتهم في الموقع محل الواقعة',
+            truth: 'satisfied',
+            basisFactIds: ['fact-presence'],
+          },
+        ],
+      },
     ],
   };
 }
@@ -113,5 +131,60 @@ describe('validateCaseBlueprint', () => {
     const blueprint = validCase();
     blueprint.knowledge[0]!.precision = 'exact';
     expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'KNOWLEDGE_EXCEEDS_SOURCE_PRECISION')).toBe(true);
+  });
+});
+
+
+describe('charge element ground truth', () => {
+  it('keeps objective charge truth separate from courtroom proof', () => {
+    const blueprint = validCase();
+    expect(chargeGroundTruthSatisfied(blueprint.charges[0]!)).toBe(true);
+
+    blueprint.charges[0]!.elements.push({
+      id: 'charge-1:intent',
+      title: 'القصد',
+      truth: 'not-satisfied',
+      basisFactIds: ['fact-street'],
+    });
+
+    expect(chargeGroundTruthSatisfied(blueprint.charges[0]!)).toBe(false);
+  });
+
+  it('rejects a charge without explicit legal elements', () => {
+    const blueprint = validCase();
+    blueprint.charges[0]!.elements = [];
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'CHARGE_HAS_NO_ELEMENTS')).toBe(true);
+  });
+
+  it('rejects an element whose truth has no fact basis', () => {
+    const blueprint = validCase();
+    blueprint.charges[0]!.elements[0]!.basisFactIds = [];
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'CHARGE_ELEMENT_HAS_NO_TRUTH_BASIS')).toBe(true);
+  });
+
+  it('rejects an element that references a missing ground-truth fact', () => {
+    const blueprint = validCase();
+    blueprint.charges[0]!.elements[0]!.basisFactIds = ['missing-fact'];
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'CHARGE_ELEMENT_UNKNOWN_FACT')).toBe(true);
+  });
+
+  it('requires charge element ids to be unique across the whole case', () => {
+    const blueprint = validCase();
+    blueprint.charges.push({
+      id: 'charge-2',
+      title: 'تهمة ثانية',
+      defendantIds: ['def-1'],
+      burden: 'beyond-reasonable-doubt',
+      elements: [
+        {
+          id: 'charge-1:presence',
+          title: 'عنصر مكرر',
+          truth: 'satisfied',
+          basisFactIds: ['fact-presence'],
+        },
+      ],
+    });
+
+    expect(validateCaseBlueprint(blueprint).some((issue) => issue.code === 'DUPLICATE_CHARGE_ELEMENT_ID')).toBe(true);
   });
 });
