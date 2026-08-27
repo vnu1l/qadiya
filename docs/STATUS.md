@@ -4,7 +4,7 @@ Last updated: 2026-08-27
 
 ## Current milestone
 
-**Phase 6 foundation — perceived-knowledge boundary under verification**
+**Phase 6 foundation — private role brief boundary under verification**
 
 ## Completed
 
@@ -36,9 +36,9 @@ Full source pipeline is verified green on commit `1c82cf2bdd6e391fc7d1d7a2b49f47
 
 ## Next exact implementation steps
 
-1. Verify perceivedDescription separation with full CI.
-2. Derive role-specific private briefs using only holder-facing knowledge/evidence permissions.
-3. Prove briefs never expose charge truth/basis facts or another character's private knowledge before CourtRoom integration.
+1. Verify role-specific private brief projections with full CI.
+2. Add a server-side adapter from safe Case Engine briefs to Shared PrivatePlayerBrief/PrivateCaseVault.
+3. Only after adapter privacy tests pass, connect composed cases to the pre-game room lifecycle.
 
 ## Known feature limitations (not build errors)
 

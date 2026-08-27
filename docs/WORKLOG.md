@@ -581,3 +581,28 @@
 
 **Next**
 - تشغيل CI الكامل. إذا نجح، بناء role-specific private brief derivation مع اختبارات تمنع ظهور charge truth/basis facts أو معرفة شخص آخر.
+
+
+---
+
+## 2026-08-27 — Private role brief derivation boundary
+
+**Changed**
+- أضيف derivePrivateRoleBrief كطبقة Case Engine فقط، بدون Room/Network integration.
+- Judge يرى sanitized charges فقط؛ لا evidence ولا memory ولا truth/basis fields.
+- Prosecution/Defense يرون فقط evidence المسموح لدورهم، بعد حذف hidden relations مثل factIds/reliability/ambiguity.
+- Defense brief يتطلب client فعليًا ولا يحصل تلقائيًا على defendant memory.
+- Defendant وvariable roles يحصلون فقط على perceived knowledge التي تخص character id الصحيح.
+- numeric accuracy لا تصل للـbrief؛ subjective confidence تتحول إلى low/medium/high.
+- أضيف typed CaseBriefError للـcharacter/role/client mismatches.
+- أضيفت اختبارات صريحة تمنع truth/basisFactIds/factIds/reliability/ambiguity leaks وتمنع ذاكرة لاعب من الظهور للاعب آخر.
+
+**Reason**
+- الـCaseBlueprint يحتوي أسرارًا وGround Truth لا يجب أن يُرسل للعميل. نحتاج projection آمنة قبل أن نربط أي شيء بـPrivateCaseVault أو Colyseus.
+
+**Remaining**
+- هذه briefs ليست بعد Shared PrivatePlayerBrief ولا مرتبطة بـplayer/session ids.
+- لا يوجد بعد adapter يربط core role allocation/variable role assignment بالشخصيات ثم يملأ PrivateCaseVault.
+
+**Next**
+- تشغيل CI الكامل. إذا نجح، بناء server-side adapter يحول PrivateRoleBrief إلى PrivatePlayerBrief ويخزنها في PrivateCaseVault بدون إرسال CaseBlueprint للعميل.

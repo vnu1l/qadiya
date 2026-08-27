@@ -551,3 +551,13 @@ Views أساسية: front/3-quarter، profile، back/over-shoulder، seated، sp
 - Client/private brief لا يقرأ النص الحقيقي للـFact مباشرة؛ يعرض فقط perceivedDescription الخاصة بصاحب المعرفة.
 - accuracy/confidence/precision تصف علاقة الإدراك بالحقيقة، لكنها لا تكفي وحدها لمنع تسريب الحقيقة إذا كان النص نفسه موضوعيًا؛ لذلك perceivedDescription إلزامية.
 - الشاهد قد يملك إدراكًا صادقًا لكنه خاطئ أو غير دقيق، بينما Ground Truth يبقى على السيرفر.
+
+
+## 36. Private Role Brief Boundary
+
+- Private role briefs تُشتق داخل Case Engine من CaseBlueprint ولا تحتوي Ground Truth fields الخام.
+- Judge brief يحتوي التهم وعناصرها العامة فقط؛ لا Evidence ولا Memory ولا element truth/basis facts.
+- Prosecution/Defense يحصلان فقط على Evidence المسموح لدورهما، بعد حذف factIds وreliability وambiguity والمراجع الداخلية.
+- Defense لا يرث ذاكرة المتهم تلقائيًا؛ ما يقوله المتهم لمحاميه يأتي لاحقًا عبر Privileged Consultation.
+- Defendant/variable role يحصل فقط على Knowledge التي holderCharacterId يطابق شخصيته، وبصيغة perceivedDescription لا Fact.description الموضوعية.
+- confidence في الـbrief تتحول إلى band ذات معنى للاعب، ولا يتم كشف accuracy الحقيقة-relative.
